@@ -20,3 +20,11 @@ To dump information of a pull request of the current repository. For example,
 ```console
 bb-pr describe 939
 ```
+
+##### checkout
+
+To checkout the branch of a pull request of the current repository. For example,
+
+```console
+bb-pr checkout 939
+```

@@ -71,6 +71,7 @@ type Commands int
 const (
 	listCommand Commands = iota
 	describeCommand
+	checkoutCommand
 )
 
 func main() {
@@ -95,6 +96,8 @@ func main() {
 		list(remote, username, password)
 	} else if command.Command == describeCommand {
 		describe(remote, username, password, command.PullRequestNumber)
+	} else if command.Command == checkoutCommand {
+		checkout(remote, username, password, command.PullRequestNumber)
 	}
 }
 
@@ -112,6 +115,12 @@ func parseCommands(args []string) (*Command, error) {
 			dumpError(err)
 			return &Command{describeCommand, prNum}, nil
 		}
+		if args[1] == "checkout" {
+			prNumStr := args[2]
+			prNum, err := strconv.Atoi(prNumStr)
+			dumpError(err)
+			return &Command{checkoutCommand, prNum}, nil
+		}
 	}
 	return nil, errors.New("Unknown command")
 }
@@ -120,6 +129,7 @@ func help() {
 	fmt.Println("Here are the commands available")
 	fmt.Println("- list")
 	fmt.Println("- describe")
+	fmt.Println("- checkout")
 }
 
 func list(remote *Remote, username string, password string) {
@@ -157,6 +167,24 @@ func describe(remote *Remote, username string, password string, pullRequestNumbe
 			fmt.Printf("Approved by %s\n", reviewer.User.DisplayName)
 		}
 	}
+}
+
+func checkout(remote *Remote, username string, password string, pullRequestNumber int) {
+	pr, err := getPullRequest(remote.Org, remote.Repo, username, password, pullRequestNumber)
+	dumpError(err)
+
+	cmdName := "git"
+	fetchArgs := []string{"fetch"}
+	_, errFetch := exec.Command(cmdName, fetchArgs...).Output()
+	dumpError(errFetch)
+
+	checkoutArgs := []string{"checkout", pr.Source.Branch.Name}
+	_, errCheckout := exec.Command(cmdName, checkoutArgs...).Output()
+	dumpError(errCheckout)
+
+	pullArgs := []string{"pull"}
+	_, errPull := exec.Command(cmdName, pullArgs...).Output()
+	dumpError(errPull)
 }
 
 func getCredentials() (string, string, error) {

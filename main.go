@@ -47,13 +47,58 @@ type Remote struct {
 	Repo string
 }
 
+type Command struct {
+	Command           Commands
+	PullRequestNumber int
+}
+
+type Commands int
+
+const (
+	listCommand Commands = iota
+)
+
 func main() {
+	if len(os.Args) == 1 {
+		help()
+		return
+	}
+
+	command, errCommand := parseCommands(os.Args)
+	if errCommand != nil {
+		help()
+		return
+	}
+
 	username, password, errCred := getCredentials()
 	dumpError(errCred)
 
 	remote, errRemote := getRemote()
 	dumpError(errRemote)
 
+	if command.Command == listCommand {
+		list(remote, username, password)
+	}
+}
+
+func parseCommands(args []string) (*Command, error) {
+	if len(args) == 1 {
+		help()
+	}
+	if len(args) > 1 {
+		if args[1] == "list" {
+			return &Command{listCommand, -1}, nil
+		}
+	}
+	return nil, errors.New("Unknown command")
+}
+
+func help() {
+	fmt.Println("Here are the commands available")
+	fmt.Println("- list")
+}
+
+func list(remote *Remote, username string, password string) {
 	prList, err := getPullRequestList(remote.Org, remote.Repo, username, password)
 	dumpError(err)
 

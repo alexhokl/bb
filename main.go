@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -49,28 +48,32 @@ type Remote struct {
 }
 
 func main() {
-	username := os.Getenv("bbuser")
-	password := os.Getenv("bbpassword")
-
-	if username == "" {
-		log.Fatalln("bbuser is not set")
-		return
-	}
-	if password == "" {
-		log.Fatalln("bbpassword is not set")
-		return
-	}
+	username, password, errCred := getCredentials()
+	dumpError(errCred)
 
 	remote, errRemote := getRemote()
 	dumpError(errRemote)
 
-	fmt.Println(remote.Org, remote.Repo)
 	prList, err := getPullRequestList(remote.Org, remote.Repo, username, password)
 	dumpError(err)
 
 	for _, pr := range prList.Items {
 		fmt.Printf("%d %s %s->%s %s\n", pr.ID, pr.Author.DisplayName, pr.Source.Branch.Name, pr.Destination.Branch.Name, pr.Title)
 	}
+}
+
+func getCredentials() (string, string, error) {
+	username := os.Getenv("bbuser")
+	password := os.Getenv("bbpassword")
+
+	if username == "" {
+		return "", "", errors.New("bbuser is not set")
+	}
+	if password == "" {
+		return "", "", errors.New("bbpassword is not set")
+	}
+
+	return username, password, nil
 }
 
 func getPullRequestList(org string, repo string, username string, password string) (*PullRequestList, error) {

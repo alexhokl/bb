@@ -28,3 +28,27 @@ To checkout the branch of a pull request of the current repository. For example,
 ```console
 bb-pr checkout 939
 ```
+
+##### approve
+
+To approve a pull request. For example
+
+```console
+bb-pr approve 939
+```
+
+##### unapprove
+
+To unapprove an approved pull request. For example
+
+```console
+bb-pr unapprove 939
+```
+
+##### decline
+
+To decline a pull request. For example
+
+```console
+bb-pr decline 939
+```

@@ -72,6 +72,9 @@ const (
 	listCommand Commands = iota
 	describeCommand
 	checkoutCommand
+	approveCommand
+	unapproveCommand
+	declineCommand
 )
 
 func main() {
@@ -92,12 +95,21 @@ func main() {
 	remote, errRemote := getRemote()
 	dumpError(errRemote)
 
-	if command.Command == listCommand {
+	switch command.Command {
+	case listCommand:
 		list(remote, username, password)
-	} else if command.Command == describeCommand {
+	case describeCommand:
 		describe(remote, username, password, command.PullRequestNumber)
-	} else if command.Command == checkoutCommand {
+	case checkoutCommand:
 		checkout(remote, username, password, command.PullRequestNumber)
+	case approveCommand:
+		approve(remote, username, password, command.PullRequestNumber)
+	case unapproveCommand:
+		unapprove(remote, username, password, command.PullRequestNumber)
+	case declineCommand:
+		decline(remote, username, password, command.PullRequestNumber)
+	default:
+		help()
 	}
 }
 
@@ -121,6 +133,24 @@ func parseCommands(args []string) (*Command, error) {
 			dumpError(err)
 			return &Command{checkoutCommand, prNum}, nil
 		}
+		if args[1] == "approve" {
+			prNumStr := args[2]
+			prNum, err := strconv.Atoi(prNumStr)
+			dumpError(err)
+			return &Command{approveCommand, prNum}, nil
+		}
+		if args[1] == "unapprove" {
+			prNumStr := args[2]
+			prNum, err := strconv.Atoi(prNumStr)
+			dumpError(err)
+			return &Command{unapproveCommand, prNum}, nil
+		}
+		if args[1] == "decline" {
+			prNumStr := args[2]
+			prNum, err := strconv.Atoi(prNumStr)
+			dumpError(err)
+			return &Command{declineCommand, prNum}, nil
+		}
 	}
 	return nil, errors.New("Unknown command")
 }
@@ -130,6 +160,9 @@ func help() {
 	fmt.Println("- list")
 	fmt.Println("- describe")
 	fmt.Println("- checkout")
+	fmt.Println("- approve")
+	fmt.Println("- unapprove")
+	fmt.Println("- decline")
 }
 
 func list(remote *Remote, username string, password string) {
@@ -138,7 +171,7 @@ func list(remote *Remote, username string, password string) {
 
 	for _, pr := range prList.Items {
 		prInfo, _ := getPullRequest(remote.Org, remote.Repo, username, password, pr.ID)
-		isApproved := isApproved(prInfo, username)
+		isApproved := prInfo.isApproved(username)
 		if isApproved {
 			color.Cyan(pr.toString())
 		} else if pr.Author.Username == username {
@@ -153,7 +186,7 @@ func describe(remote *Remote, username string, password string, pullRequestNumbe
 	pr, err := getPullRequest(remote.Org, remote.Repo, username, password, pullRequestNumber)
 	dumpError(err)
 
-	isApproved := isApproved(pr, username)
+	isApproved := pr.isApproved(username)
 	if isApproved {
 		color.Cyan(pr.toString())
 	} else if pr.Author.Username == username {
@@ -187,6 +220,75 @@ func checkout(remote *Remote, username string, password string, pullRequestNumbe
 	dumpError(errPull)
 }
 
+func approve(remote *Remote, username string, password string, pullRequestNumber int) error {
+	client := &http.Client{}
+	req, _ := http.NewRequest(
+		"POST",
+		fmt.Sprintf(
+			"https://bitbucket.org/api/2.0/repositories/%s/%s/pullrequests/%d/approve",
+			remote.Org,
+			remote.Repo,
+			pullRequestNumber),
+		nil)
+	req.SetBasicAuth(username, password)
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		dumpResponse(resp)
+		return errors.New("Failed response")
+	}
+	return nil
+}
+
+func unapprove(remote *Remote, username string, password string, pullRequestNumber int) error {
+	client := &http.Client{}
+	req, _ := http.NewRequest(
+		"DELETE",
+		fmt.Sprintf(
+			"https://bitbucket.org/api/2.0/repositories/%s/%s/pullrequests/%d/approve",
+			remote.Org,
+			remote.Repo,
+			pullRequestNumber),
+		nil)
+	req.SetBasicAuth(username, password)
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		dumpResponse(resp)
+		return errors.New("Failed response")
+	}
+	return nil
+}
+
+func decline(remote *Remote, username string, password string, pullRequestNumber int) error {
+	client := &http.Client{}
+	req, _ := http.NewRequest(
+		"POST",
+		fmt.Sprintf(
+			"https://bitbucket.org/api/2.0/repositories/%s/%s/pullrequests/%d/decline",
+			remote.Org,
+			remote.Repo,
+			pullRequestNumber),
+		nil)
+	req.SetBasicAuth(username, password)
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		dumpResponse(resp)
+		return errors.New("Failed response")
+	}
+	return nil
+}
+
 func getCredentials() (string, string, error) {
 	username := os.Getenv("bbuser")
 	password := os.Getenv("bbpassword")
@@ -217,7 +319,14 @@ func getPullRequestList(org string, repo string, username string, password strin
 
 func getPullRequest(org string, repo string, username string, password string, pullRequestNumber int) (*PullRequest, error) {
 	client := &http.Client{}
-	req, _ := http.NewRequest("GET", fmt.Sprintf("https://bitbucket.org/api/2.0/repositories/%s/%s/pullrequests/%d", org, repo, pullRequestNumber), nil)
+	req, _ := http.NewRequest(
+		"GET",
+		fmt.Sprintf(
+			"https://bitbucket.org/api/2.0/repositories/%s/%s/pullrequests/%d",
+			org,
+			repo,
+			pullRequestNumber),
+		nil)
 	req.SetBasicAuth(username, password)
 	resp, err := client.Do(req)
 	dumpError(err)
@@ -254,7 +363,7 @@ func dumpError(err error) {
 	}
 }
 
-func isApproved(pr *PullRequest, username string) bool {
+func (pr *PullRequest) isApproved(username string) bool {
 	for _, reviewer := range pr.Participants {
 		if reviewer.Approved && reviewer.User.Username == username {
 			return true
@@ -264,9 +373,11 @@ func isApproved(pr *PullRequest, username string) bool {
 }
 
 func (pr *PullRequestInfo) toString() string {
+	loc, _ := time.LoadLocation("Local")
+	updatedUtc := pr.UpdatedOn.In(loc)
 	return fmt.Sprintf("%d %s %s\t%s->%s %s\n",
 		pr.ID,
-		pr.UpdatedOn.Format("2006-01-02 15:04"),
+		updatedUtc.Format("2006-01-02 15:04"),
 		pr.Author.DisplayName,
 		pr.Source.Branch.Name,
 		pr.Destination.Branch.Name,
@@ -274,9 +385,11 @@ func (pr *PullRequestInfo) toString() string {
 }
 
 func (pr *PullRequest) toString() string {
+	loc, _ := time.LoadLocation("Local")
+	updatedUtc := pr.UpdatedOn.In(loc)
 	return fmt.Sprintf("%d %s %s\t%s->%s %s\n",
 		pr.ID,
-		pr.UpdatedOn.Format("2006-01-02 15:04"),
+		updatedUtc.Format("2006-01-02 15:04"),
 		pr.Author.DisplayName,
 		pr.Source.Branch.Name,
 		pr.Destination.Branch.Name,

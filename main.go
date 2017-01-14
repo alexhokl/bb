@@ -8,8 +8,11 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/fatih/color"
 )
 
 type PullRequestList struct {
@@ -27,6 +30,17 @@ type PullRequestInfo struct {
 	Author      User      `json:"author"`
 	Destination Commit    `json:"destination"`
 	Source      Commit    `json:"source"`
+	Description string    `json:"description"`
+}
+
+type PullRequest struct {
+	PullRequestInfo
+	Participants []Reviewer `json:"participants"`
+}
+
+type Reviewer struct {
+	User     User `json:"user"`
+	Approved bool `json:"approved"`
 }
 
 type User struct {
@@ -56,6 +70,7 @@ type Commands int
 
 const (
 	listCommand Commands = iota
+	describeCommand
 )
 
 func main() {
@@ -78,6 +93,8 @@ func main() {
 
 	if command.Command == listCommand {
 		list(remote, username, password)
+	} else if command.Command == describeCommand {
+		describe(remote, username, password, command.PullRequestNumber)
 	}
 }
 
@@ -89,6 +106,12 @@ func parseCommands(args []string) (*Command, error) {
 		if args[1] == "list" {
 			return &Command{listCommand, -1}, nil
 		}
+		if args[1] == "describe" {
+			prNumStr := args[2]
+			prNum, err := strconv.Atoi(prNumStr)
+			dumpError(err)
+			return &Command{describeCommand, prNum}, nil
+		}
 	}
 	return nil, errors.New("Unknown command")
 }
@@ -96,6 +119,7 @@ func parseCommands(args []string) (*Command, error) {
 func help() {
 	fmt.Println("Here are the commands available")
 	fmt.Println("- list")
+	fmt.Println("- describe")
 }
 
 func list(remote *Remote, username string, password string) {
@@ -103,7 +127,31 @@ func list(remote *Remote, username string, password string) {
 	dumpError(err)
 
 	for _, pr := range prList.Items {
-		fmt.Printf("%d %s %s->%s %s\n", pr.ID, pr.Author.DisplayName, pr.Source.Branch.Name, pr.Destination.Branch.Name, pr.Title)
+		prInfo, _ := getPullRequest(remote.Org, remote.Repo, username, password, pr.ID)
+		isApproved := isApproved(prInfo, username)
+		if isApproved {
+			color.Cyan(toString(&pr))
+		} else {
+			color.Red(toString(&pr))
+		}
+	}
+}
+
+func describe(remote *Remote, username string, password string, pullRequestNumber int) {
+	pr, err := getPullRequest(remote.Org, remote.Repo, username, password, pullRequestNumber)
+	dumpError(err)
+
+	isApproved := isApproved(pr, username)
+	if isApproved {
+		color.Cyan(toInfoString(pr))
+	} else {
+		color.Red(toInfoString(pr))
+	}
+
+	for _, reviewer := range pr.Participants {
+		if reviewer.Approved {
+			fmt.Printf("Approved by %s\n", reviewer.User.DisplayName)
+		}
 	}
 }
 
@@ -135,11 +183,32 @@ func getPullRequestList(org string, repo string, username string, password strin
 	return parsePullRequestListResponse(resp), nil
 }
 
+func getPullRequest(org string, repo string, username string, password string, pullRequestNumber int) (*PullRequest, error) {
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", fmt.Sprintf("https://bitbucket.org/api/2.0/repositories/%s/%s/pullrequests/%d", org, repo, pullRequestNumber), nil)
+	req.SetBasicAuth(username, password)
+	resp, err := client.Do(req)
+	dumpError(err)
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		dumpResponse(resp)
+		return nil, errors.New("Failed response")
+	}
+	return parsePullRequestResponse(resp), nil
+}
+
 func parsePullRequestListResponse(resp *http.Response) *PullRequestList {
 	var prList PullRequestList
 	errDecode := json.NewDecoder(resp.Body).Decode(&prList)
 	dumpError(errDecode)
 	return &prList
+}
+
+func parsePullRequestResponse(resp *http.Response) *PullRequest {
+	var pr PullRequest
+	errDecode := json.NewDecoder(resp.Body).Decode(&pr)
+	dumpError(errDecode)
+	return &pr
 }
 
 func dumpResponse(resp *http.Response) {
@@ -151,6 +220,35 @@ func dumpError(err error) {
 	if err != nil {
 		panic(err.Error())
 	}
+}
+
+func isApproved(pr *PullRequest, username string) bool {
+	for _, reviewer := range pr.Participants {
+		if reviewer.Approved && reviewer.User.Username == username {
+			return true
+		}
+	}
+	return false
+}
+
+func toString(pr *PullRequestInfo) string {
+	return fmt.Sprintf("%d %s %s\t%s->%s %s\n",
+		pr.ID,
+		pr.UpdatedOn.Format("2006-01-02 15:04"),
+		pr.Author.DisplayName,
+		pr.Source.Branch.Name,
+		pr.Destination.Branch.Name,
+		pr.Title)
+}
+
+func toInfoString(pr *PullRequest) string {
+	return fmt.Sprintf("%d %s %s\t%s->%s %s\n",
+		pr.ID,
+		pr.UpdatedOn.Format("2006-01-02 15:04"),
+		pr.Author.DisplayName,
+		pr.Source.Branch.Name,
+		pr.Destination.Branch.Name,
+		pr.Title)
 }
 
 func getRemote() (*Remote, error) {

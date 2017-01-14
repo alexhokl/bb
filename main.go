@@ -130,9 +130,11 @@ func list(remote *Remote, username string, password string) {
 		prInfo, _ := getPullRequest(remote.Org, remote.Repo, username, password, pr.ID)
 		isApproved := isApproved(prInfo, username)
 		if isApproved {
-			color.Cyan(toString(&pr))
+			color.Cyan(pr.toString())
+		} else if pr.Author.Username == username {
+			color.Blue(pr.toString())
 		} else {
-			color.Red(toString(&pr))
+			color.Red(pr.toString())
 		}
 	}
 }
@@ -143,9 +145,11 @@ func describe(remote *Remote, username string, password string, pullRequestNumbe
 
 	isApproved := isApproved(pr, username)
 	if isApproved {
-		color.Cyan(toInfoString(pr))
+		color.Cyan(pr.toString())
+	} else if pr.Author.Username == username {
+		color.Blue(pr.toString())
 	} else {
-		color.Red(toInfoString(pr))
+		color.Red(pr.toString())
 	}
 
 	for _, reviewer := range pr.Participants {
@@ -231,7 +235,7 @@ func isApproved(pr *PullRequest, username string) bool {
 	return false
 }
 
-func toString(pr *PullRequestInfo) string {
+func (pr *PullRequestInfo) toString() string {
 	return fmt.Sprintf("%d %s %s\t%s->%s %s\n",
 		pr.ID,
 		pr.UpdatedOn.Format("2006-01-02 15:04"),
@@ -241,7 +245,7 @@ func toString(pr *PullRequestInfo) string {
 		pr.Title)
 }
 
-func toInfoString(pr *PullRequest) string {
+func (pr *PullRequest) toString() string {
 	return fmt.Sprintf("%d %s %s\t%s->%s %s\n",
 		pr.ID,
 		pr.UpdatedOn.Format("2006-01-02 15:04"),

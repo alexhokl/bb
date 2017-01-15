@@ -17,7 +17,7 @@ type APIClient interface {
 	UnapproveRequest(cred *models.UserCredential, repo *models.Repository, id int) error
 	DeclineRequest(cred *models.UserCredential, repo *models.Repository, id int) error
 	MergeRequest(cred *models.UserCredential, repo *models.Repository, id int) error
-	ActivityRequest(cred *models.UserCredential, repo *models.Repository, id int) (*models.PullRequestActivityList, error)
+	ActivityRequest(cred *models.UserCredential, repo *models.Repository, id int) ([]models.PullRequestActivity, error)
 }
 
 // Client struct

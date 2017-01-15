@@ -9,9 +9,14 @@ import (
 	"github.com/alexhokl/go-bb-pr/models"
 )
 
+type pullRequestActivityListResponse struct {
+	Items []models.PullRequestActivity `json:"values"`
+	Next  string                       `json:"next"`
+}
+
 // ActivityRequest makes API call(s) to retrieve activities of a pull request
-func (client *Client) ActivityRequest(cred *models.UserCredential, repo *models.Repository, id int) (*models.PullRequestActivityList, error) {
-	var list *models.PullRequestActivityList
+func (client *Client) ActivityRequest(cred *models.UserCredential, repo *models.Repository, id int) ([]models.PullRequestActivity, error) {
+	var list []models.PullRequestActivity
 
 	path := fmt.Sprintf("%s/%d/activity", getBasePath(repo), id)
 
@@ -26,25 +31,24 @@ func (client *Client) ActivityRequest(cred *models.UserCredential, repo *models.
 			msg := getErrorResponseMessage(resp)
 			return nil, errors.New(msg)
 		}
-		var events *models.PullRequestActivityList
-		events, errParse := parseActivities(resp)
+		listResponse, errParse := parseActivities(resp)
 		if errParse != nil {
 			return nil, errParse
 		}
 		if list == nil {
-			list = events
+			list = listResponse.Items
 		} else {
-			for _, e := range events.Items {
-				list.Items = append(list.Items, e)
+			for _, e := range listResponse.Items {
+				list = append(list, e)
 			}
 		}
-		path = events.Next
+		path = listResponse.Next
 	}
 	return list, nil
 }
 
-func parseActivities(resp *http.Response) (*models.PullRequestActivityList, error) {
-	var jsonObj models.PullRequestActivityList
+func parseActivities(resp *http.Response) (*pullRequestActivityListResponse, error) {
+	var jsonObj pullRequestActivityListResponse
 	err := json.NewDecoder(resp.Body).Decode(&jsonObj)
 	if err != nil {
 		return nil, err

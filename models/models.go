@@ -64,13 +64,6 @@ type Branch struct {
 	Name string `json:"name"`
 }
 
-// PullRequestActivityList struct
-type PullRequestActivityList struct {
-	PageLen int                   `json:"pagelen"`
-	Next    string                `json:"next"`
-	Items   []PullRequestActivity `json:"values"`
-}
-
 // PullRequestActivity struct
 type PullRequestActivity struct {
 	Update  Update  `json:"update,omitempty"`

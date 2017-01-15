@@ -59,7 +59,7 @@ func runDescribe(cli *ManagerCli, args []string) error {
 
 	fmt.Println("")
 
-	for _, event := range activities.Items {
+	for _, event := range activities {
 		if event.Comment != (models.Comment{}) {
 			fmt.Println(event.Comment.ToString())
 		}

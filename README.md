@@ -1,4 +1,4 @@
-# BitBucket Pull Requests Manager [![Build Status](https://travis-ci.org/alexhokl/go-bb-pr.svg?branch=master)](https://travis-ci.org/alexhokl/go-bb-pr)
+# BitBucket Pull Request Manager [![Build Status](https://travis-ci.org/alexhokl/go-bb-pr.svg?branch=master)](https://travis-ci.org/alexhokl/go-bb-pr)
 
 This is a command line tool to help working with BitBucket pull requests.
 

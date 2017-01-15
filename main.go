@@ -1,158 +1,63 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
-	"time"
 
-	"github.com/fatih/color"
-)
-
-type PullRequestList struct {
-	PageLen int               `json:"pagelen"`
-	Page    int               `json:"page"`
-	Size    int               `json:"size"`
-	Items   []PullRequestInfo `json:"values"`
-}
-
-type PullRequestInfo struct {
-	ID          int       `json:"id"`
-	Title       string    `json:"title"`
-	CreatedOn   time.Time `json:"created_on"`
-	UpdatedOn   time.Time `json:"updated_on"`
-	Author      User      `json:"author"`
-	Destination Commit    `json:"destination"`
-	Source      Commit    `json:"source"`
-	Description string    `json:"description"`
-}
-
-type PullRequest struct {
-	PullRequestInfo
-	Participants []Reviewer `json:"participants"`
-}
-
-type Reviewer struct {
-	User     User `json:"user"`
-	Approved bool `json:"approved"`
-}
-
-type User struct {
-	Username    string `json:"username"`
-	DisplayName string `json:"display_name"`
-}
-
-type Commit struct {
-	Branch Branch `json:"branch"`
-}
-
-type Branch struct {
-	Name string `json:"name"`
-}
-
-type Remote struct {
-	Org  string
-	Repo string
-}
-
-type Command struct {
-	Command           Commands
-	PullRequestNumber int
-}
-
-type Commands int
-
-const (
-	listCommand Commands = iota
-	describeCommand
-	checkoutCommand
-	approveCommand
-	unapproveCommand
-	declineCommand
+	"github.com/alexhokl/go-bb-pr/command"
+	"github.com/alexhokl/go-bb-pr/models"
+	"github.com/spf13/cobra"
 )
 
 func main() {
-	if len(os.Args) == 1 {
-		help()
-		return
+	cred, errCred := getCredentials()
+	if errCred != nil {
+		fmt.Println(errCred)
+		os.Exit(1)
 	}
 
-	command, errCommand := parseCommands(os.Args)
-	if errCommand != nil {
-		help()
-		return
+	repo, errRemote := getRepository()
+	if errRemote != nil {
+		fmt.Println(errRemote)
+		os.Exit(1)
 	}
 
-	username, password, errCred := getCredentials()
-	dumpError(errCred)
+	managerCli := command.NewManagerCli(cred, repo)
+	cmd := newManagerCommand(managerCli)
 
-	remote, errRemote := getRemote()
-	dumpError(errRemote)
-
-	switch command.Command {
-	case listCommand:
-		list(remote, username, password)
-	case describeCommand:
-		describe(remote, username, password, command.PullRequestNumber)
-	case checkoutCommand:
-		checkout(remote, username, password, command.PullRequestNumber)
-	case approveCommand:
-		approve(remote, username, password, command.PullRequestNumber)
-	case unapproveCommand:
-		unapprove(remote, username, password, command.PullRequestNumber)
-	case declineCommand:
-		decline(remote, username, password, command.PullRequestNumber)
-	default:
-		help()
+	if err := cmd.Execute(); err != nil {
+		if sterr, ok := err.(command.StatusError); ok {
+			if sterr.Status != "" {
+				fmt.Println(sterr.Status)
+			}
+			if sterr.StatusCode == 0 {
+				os.Exit(1)
+			}
+			os.Exit(sterr.StatusCode)
+		}
+		fmt.Println(err)
+		os.Exit(1)
 	}
 }
 
-func parseCommands(args []string) (*Command, error) {
-	if len(args) == 1 {
-		help()
+func newManagerCommand(cli *command.ManagerCli) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "go-bb-pr COMMAND",
+		Short: "A BitBucket Pull Request Manager",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			help()
+			return nil
+		},
 	}
-	if len(args) > 1 {
-		if args[1] == "list" {
-			return &Command{listCommand, -1}, nil
-		}
-		if args[1] == "describe" {
-			prNumStr := args[2]
-			prNum, err := strconv.Atoi(prNumStr)
-			dumpError(err)
-			return &Command{describeCommand, prNum}, nil
-		}
-		if args[1] == "checkout" {
-			prNumStr := args[2]
-			prNum, err := strconv.Atoi(prNumStr)
-			dumpError(err)
-			return &Command{checkoutCommand, prNum}, nil
-		}
-		if args[1] == "approve" {
-			prNumStr := args[2]
-			prNum, err := strconv.Atoi(prNumStr)
-			dumpError(err)
-			return &Command{approveCommand, prNum}, nil
-		}
-		if args[1] == "unapprove" {
-			prNumStr := args[2]
-			prNum, err := strconv.Atoi(prNumStr)
-			dumpError(err)
-			return &Command{unapproveCommand, prNum}, nil
-		}
-		if args[1] == "decline" {
-			prNumStr := args[2]
-			prNum, err := strconv.Atoi(prNumStr)
-			dumpError(err)
-			return &Command{declineCommand, prNum}, nil
-		}
-	}
-	return nil, errors.New("Unknown command")
+	command.AddCommands(cmd, cli)
+	return cmd
+}
+
+func showVersion() {
+	fmt.Printf("BitBucket Pull Request Manager version %s\n", "0.9.0")
 }
 
 func help() {
@@ -165,242 +70,29 @@ func help() {
 	fmt.Println("- decline")
 }
 
-func list(remote *Remote, username string, password string) {
-	prList, err := getPullRequestList(remote.Org, remote.Repo, username, password)
-	dumpError(err)
-
-	for _, pr := range prList.Items {
-		prInfo, _ := getPullRequest(remote.Org, remote.Repo, username, password, pr.ID)
-		isApproved := prInfo.isApproved(username)
-		if isApproved {
-			color.Cyan(pr.toString())
-		} else if pr.Author.Username == username {
-			color.Blue(pr.toString())
-		} else {
-			color.Red(pr.toString())
-		}
-	}
-}
-
-func describe(remote *Remote, username string, password string, pullRequestNumber int) {
-	pr, err := getPullRequest(remote.Org, remote.Repo, username, password, pullRequestNumber)
-	dumpError(err)
-
-	isApproved := pr.isApproved(username)
-	if isApproved {
-		color.Cyan(pr.toString())
-	} else if pr.Author.Username == username {
-		color.Blue(pr.toString())
-	} else {
-		color.Red(pr.toString())
-	}
-
-	for _, reviewer := range pr.Participants {
-		if reviewer.Approved {
-			fmt.Printf("Approved by %s\n", reviewer.User.DisplayName)
-		}
-	}
-}
-
-func checkout(remote *Remote, username string, password string, pullRequestNumber int) {
-	pr, err := getPullRequest(remote.Org, remote.Repo, username, password, pullRequestNumber)
-	dumpError(err)
-
-	cmdName := "git"
-	fetchArgs := []string{"fetch"}
-	_, errFetch := exec.Command(cmdName, fetchArgs...).Output()
-	dumpError(errFetch)
-
-	checkoutArgs := []string{"checkout", pr.Source.Branch.Name}
-	_, errCheckout := exec.Command(cmdName, checkoutArgs...).Output()
-	dumpError(errCheckout)
-
-	pullArgs := []string{"pull"}
-	_, errPull := exec.Command(cmdName, pullArgs...).Output()
-	dumpError(errPull)
-}
-
-func approve(remote *Remote, username string, password string, pullRequestNumber int) error {
-	client := &http.Client{}
-	req, _ := http.NewRequest(
-		"POST",
-		fmt.Sprintf(
-			"https://bitbucket.org/api/2.0/repositories/%s/%s/pullrequests/%d/approve",
-			remote.Org,
-			remote.Repo,
-			pullRequestNumber),
-		nil)
-	req.SetBasicAuth(username, password)
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		dumpResponse(resp)
-		return errors.New("Failed response")
-	}
-	return nil
-}
-
-func unapprove(remote *Remote, username string, password string, pullRequestNumber int) error {
-	client := &http.Client{}
-	req, _ := http.NewRequest(
-		"DELETE",
-		fmt.Sprintf(
-			"https://bitbucket.org/api/2.0/repositories/%s/%s/pullrequests/%d/approve",
-			remote.Org,
-			remote.Repo,
-			pullRequestNumber),
-		nil)
-	req.SetBasicAuth(username, password)
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		dumpResponse(resp)
-		return errors.New("Failed response")
-	}
-	return nil
-}
-
-func decline(remote *Remote, username string, password string, pullRequestNumber int) error {
-	client := &http.Client{}
-	req, _ := http.NewRequest(
-		"POST",
-		fmt.Sprintf(
-			"https://bitbucket.org/api/2.0/repositories/%s/%s/pullrequests/%d/decline",
-			remote.Org,
-			remote.Repo,
-			pullRequestNumber),
-		nil)
-	req.SetBasicAuth(username, password)
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		dumpResponse(resp)
-		return errors.New("Failed response")
-	}
-	return nil
-}
-
-func getCredentials() (string, string, error) {
+func getCredentials() (*models.UserCredential, error) {
 	username := os.Getenv("bbuser")
 	password := os.Getenv("bbpassword")
 
 	if username == "" {
-		return "", "", errors.New("bbuser is not set")
+		return nil, errors.New("bbuser is not set")
 	}
 	if password == "" {
-		return "", "", errors.New("bbpassword is not set")
+		return nil, errors.New("bbpassword is not set")
 	}
 
-	return username, password, nil
+	cred := models.UserCredential{Username: username, Password: password}
+
+	return &cred, nil
 }
 
-func getPullRequestList(org string, repo string, username string, password string) (*PullRequestList, error) {
-	client := &http.Client{}
-	req, _ := http.NewRequest("GET", fmt.Sprintf("https://bitbucket.org/api/2.0/repositories/%s/%s/pullrequests", org, repo), nil)
-	req.SetBasicAuth(username, password)
-	resp, err := client.Do(req)
-	dumpError(err)
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		dumpResponse(resp)
-		return nil, errors.New("Failed response")
-	}
-	return parsePullRequestListResponse(resp), nil
-}
-
-func getPullRequest(org string, repo string, username string, password string, pullRequestNumber int) (*PullRequest, error) {
-	client := &http.Client{}
-	req, _ := http.NewRequest(
-		"GET",
-		fmt.Sprintf(
-			"https://bitbucket.org/api/2.0/repositories/%s/%s/pullrequests/%d",
-			org,
-			repo,
-			pullRequestNumber),
-		nil)
-	req.SetBasicAuth(username, password)
-	resp, err := client.Do(req)
-	dumpError(err)
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		dumpResponse(resp)
-		return nil, errors.New("Failed response")
-	}
-	return parsePullRequestResponse(resp), nil
-}
-
-func parsePullRequestListResponse(resp *http.Response) *PullRequestList {
-	var prList PullRequestList
-	errDecode := json.NewDecoder(resp.Body).Decode(&prList)
-	dumpError(errDecode)
-	return &prList
-}
-
-func parsePullRequestResponse(resp *http.Response) *PullRequest {
-	var pr PullRequest
-	errDecode := json.NewDecoder(resp.Body).Decode(&pr)
-	dumpError(errDecode)
-	return &pr
-}
-
-func dumpResponse(resp *http.Response) {
-	_, err := io.Copy(os.Stdout, resp.Body)
-	dumpError(err)
-}
-
-func dumpError(err error) {
-	if err != nil {
-		panic(err.Error())
-	}
-}
-
-func (pr *PullRequest) isApproved(username string) bool {
-	for _, reviewer := range pr.Participants {
-		if reviewer.Approved && reviewer.User.Username == username {
-			return true
-		}
-	}
-	return false
-}
-
-func (pr *PullRequestInfo) toString() string {
-	loc, _ := time.LoadLocation("Local")
-	updatedUtc := pr.UpdatedOn.In(loc)
-	return fmt.Sprintf("%d %s %s\t%s->%s %s\n",
-		pr.ID,
-		updatedUtc.Format("2006-01-02 15:04"),
-		pr.Author.DisplayName,
-		pr.Source.Branch.Name,
-		pr.Destination.Branch.Name,
-		pr.Title)
-}
-
-func (pr *PullRequest) toString() string {
-	loc, _ := time.LoadLocation("Local")
-	updatedUtc := pr.UpdatedOn.In(loc)
-	return fmt.Sprintf("%d %s %s\t%s->%s %s\n",
-		pr.ID,
-		updatedUtc.Format("2006-01-02 15:04"),
-		pr.Author.DisplayName,
-		pr.Source.Branch.Name,
-		pr.Destination.Branch.Name,
-		pr.Title)
-}
-
-func getRemote() (*Remote, error) {
+func getRepository() (*models.Repository, error) {
 	cmdName := "git"
 	cmdArgs := []string{"remote", "get-url", "origin"}
 	cmdOut, err := exec.Command(cmdName, cmdArgs...).Output()
-	dumpError(err)
+	if err != nil {
+		return nil, err
+	}
 
 	remote := string(cmdOut)
 
@@ -414,9 +106,9 @@ func getRemote() (*Remote, error) {
 
 	parts := strings.Split(remote, "/")
 
-	r := Remote{
+	r := models.Repository{
 		Org:  parts[0],
-		Repo: parts[1],
+		Name: parts[1],
 	}
 
 	return &r, nil

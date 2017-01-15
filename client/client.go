@@ -9,18 +9,22 @@ import (
 	"github.com/alexhokl/go-bb-pr/models"
 )
 
+// APIClient interface
 type APIClient interface {
 	ListRequests(cred *models.UserCredential, repo *models.Repository) (*models.PullRequestList, error)
 	GetRequest(cred *models.UserCredential, repo *models.Repository, id int) (*models.PullRequestDetail, error)
 	ApproveRequest(cred *models.UserCredential, repo *models.Repository, id int) error
 	UnapproveRequest(cred *models.UserCredential, repo *models.Repository, id int) error
 	DeclineRequest(cred *models.UserCredential, repo *models.Repository, id int) error
+	MergeRequest(cred *models.UserCredential, repo *models.Repository, id int) error
 }
 
+// Client struct
 type Client struct {
 	client *http.Client
 }
 
+// NewClient creates a new Client instance
 func NewClient() *Client {
 	client := &http.Client{}
 

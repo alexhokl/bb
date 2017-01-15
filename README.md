@@ -37,6 +37,14 @@ To approve a pull request. For example
 bb-pr approve 939
 ```
 
+##### merge
+
+To merge a pull request. For example
+
+```console
+bb-pr merge 939
+```
+
 ##### unapprove
 
 To unapprove an approved pull request. For example

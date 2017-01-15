@@ -8,6 +8,7 @@ import (
 	"github.com/alexhokl/go-bb-pr/models"
 )
 
+// ListRequests makes an API call to retrieve a list of pull requests
 func (client *Client) ListRequests(cred *models.UserCredential, repo *models.Repository) (*models.PullRequestList, error) {
 	path := getBasePath(repo)
 	req := newRequest(cred, "GET", path)

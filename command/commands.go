@@ -11,5 +11,6 @@ func AddCommands(cmd *cobra.Command, cli *ManagerCli) {
 		NewApproveCommand(cli),
 		NewUnapproveCommand(cli),
 		NewDeclineCommand(cli),
+		NewMergeCommand(cli),
 	)
 }

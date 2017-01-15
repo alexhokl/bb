@@ -7,6 +7,7 @@ import (
 	"github.com/alexhokl/go-bb-pr/models"
 )
 
+// UnapproveRequest makes an API call to remove approval of a pull request
 func (client *Client) UnapproveRequest(cred *models.UserCredential, repo *models.Repository, id int) error {
 	path := fmt.Sprintf("%s/%d/approve", getBasePath(repo), id)
 	req := newRequest(cred, "DELETE", path)

@@ -9,6 +9,7 @@ import (
 	"github.com/alexhokl/go-bb-pr/models"
 )
 
+// GetRequest makes an API call to retrieve a pull request
 func (client *Client) GetRequest(cred *models.UserCredential, repo *models.Repository, id int) (*models.PullRequestDetail, error) {
 	path := fmt.Sprintf("%s/%d", getBasePath(repo), id)
 	req := newRequest(cred, "GET", path)

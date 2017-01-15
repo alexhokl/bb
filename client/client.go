@@ -11,7 +11,7 @@ import (
 
 // APIClient interface
 type APIClient interface {
-	ListRequests(cred *models.UserCredential, repo *models.Repository) (*models.PullRequestList, error)
+	ListRequests(cred *models.UserCredential, repo *models.Repository) ([]models.PullRequestInfo, error)
 	GetRequest(cred *models.UserCredential, repo *models.Repository, id int) (*models.PullRequestDetail, error)
 	ApproveRequest(cred *models.UserCredential, repo *models.Repository, id int) error
 	UnapproveRequest(cred *models.UserCredential, repo *models.Repository, id int) error

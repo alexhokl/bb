@@ -27,7 +27,7 @@ func runList(cli *ManagerCli) error {
 		return err
 	}
 
-	for _, pr := range prList.Items {
+	for _, pr := range prList {
 		prInfo, _ := client.GetRequest(cred, repo, pr.ID)
 		isApproved := prInfo.IsApproved(cred.Username)
 		if isApproved {

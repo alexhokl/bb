@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/alexhokl/go-bb-pr/models"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -34,6 +35,11 @@ func runDescribe(cli *ManagerCli, args []string) error {
 		return err
 	}
 
+	activities, errActivities := client.ActivityRequest(cred, repo, pullRequestNumber)
+	if errActivities != nil {
+		return errActivities
+	}
+
 	isApproved := pr.IsApproved(cred.Username)
 	if isApproved {
 		color.Cyan(pr.ToString())
@@ -43,9 +49,22 @@ func runDescribe(cli *ManagerCli, args []string) error {
 		color.Red(pr.ToString())
 	}
 
+	fmt.Println("")
+
 	for _, reviewer := range pr.Participants {
 		if reviewer.Approved {
 			fmt.Printf("Approved by %s\n", reviewer.User.DisplayName)
+		}
+	}
+
+	fmt.Println("")
+
+	for _, event := range activities.Items {
+		if event.Comment != (models.Comment{}) {
+			fmt.Println(event.Comment.ToString())
+		}
+		if event.Update != (models.Update{}) {
+			fmt.Println(event.Update.ToString())
 		}
 	}
 

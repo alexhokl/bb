@@ -1,6 +1,7 @@
 package command
 
 import (
+	"errors"
 	"os/exec"
 	"strconv"
 
@@ -23,6 +24,17 @@ func runCheckout(cli *ManagerCli, args []string) error {
 	client := cli.Client()
 	cred := cli.UserCredential()
 	repo := cli.Repo()
+
+	cmdName := "git"
+	statusArgs := []string{"status", "-s"}
+	statusOutput, errStatus := exec.Command(cmdName, statusArgs...).Output()
+	if errStatus != nil {
+		return errStatus
+	}
+	if len(statusOutput) > 0 {
+		return errors.New("Working directory is not prestine. Please stash your work and try again.")
+	}
+
 	pullRequestNumber, errParse := strconv.Atoi(args[0])
 	if errParse != nil {
 		return errParse
@@ -33,7 +45,6 @@ func runCheckout(cli *ManagerCli, args []string) error {
 		return err
 	}
 
-	cmdName := "git"
 	fetchArgs := []string{"fetch"}
 	_, errFetch := exec.Command(cmdName, fetchArgs...).Output()
 	if errFetch != nil {

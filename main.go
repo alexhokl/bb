@@ -91,6 +91,9 @@ func getRepository() (*models.Repository, error) {
 	cmdArgs := []string{"remote", "get-url", "origin"}
 	cmdOut, err := exec.Command(cmdName, cmdArgs...).Output()
 	if err != nil {
+		if strings.Contains(err.Error(), "129") {
+			return nil, errors.New("git remote get-url is not supported. Please upgrade to the latest version of git")
+		}
 		return nil, err
 	}
 

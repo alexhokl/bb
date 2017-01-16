@@ -68,6 +68,8 @@ func help() {
 	fmt.Println("- approve")
 	fmt.Println("- unapprove")
 	fmt.Println("- decline")
+	fmt.Println("- merge")
+	fmt.Println("- open")
 }
 
 func getCredentials() (*models.UserCredential, error) {

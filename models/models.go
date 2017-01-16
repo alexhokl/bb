@@ -28,12 +28,23 @@ type PullRequestInfo struct {
 	Destination Commit    `json:"destination"`
 	Source      Commit    `json:"source"`
 	Description string    `json:"description"`
+	Links       Links     `json:"links"`
 }
 
 // PullRequestDetail struct
 type PullRequestDetail struct {
 	PullRequestInfo
 	Participants []Reviewer `json:"participants"`
+}
+
+// Links struct
+type Links struct {
+	Html Link `json:"html"`
+}
+
+// Link struct
+type Link struct {
+	Href string `json:"href"`
 }
 
 // Reviewer struct

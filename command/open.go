@@ -35,10 +35,11 @@ func runOpen(cli *ManagerCli, args []string) error {
 	}
 
 	cmdName := "open"
-	if runtime.GOOS == "windows" {
-		cmdName = "start"
-	}
 	cmdArgs := []string{pr.Links.Html.Href}
+	if runtime.GOOS == "windows" {
+		cmdName = "cmd"
+		cmdArgs = []string{"/C", "start", pr.Links.Html.Href}
+	}
 	_, errOpen := exec.Command(cmdName, cmdArgs...).Output()
 	if errOpen != nil {
 		return errOpen

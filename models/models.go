@@ -126,7 +126,7 @@ func (pr PullRequestDetail) IsApproved(username string) bool {
 
 // ToString returns the description of a pull request
 func (pr PullRequestInfo) ToString() string {
-	return fmt.Sprintf("%d %s %s\n\t%s->%s\n\t%s\n",
+	return fmt.Sprintf("%d %s %s\n\t%s -> %s\n\t%s\n",
 		pr.ID,
 		formatLocalTime(pr.UpdatedOn),
 		pr.Author.DisplayName,
@@ -137,7 +137,7 @@ func (pr PullRequestInfo) ToString() string {
 
 // ToString returns the description of a pull request
 func (pr PullRequestDetail) ToString() string {
-	return fmt.Sprintf("%d %s %s\n\t%s->%s\n\t%s\n%s\n",
+	return fmt.Sprintf("%d %s %s\n\t%s -> %s\n\t%s\n%s\n",
 		pr.ID,
 		formatLocalTime(pr.UpdatedOn),
 		pr.Author.DisplayName,

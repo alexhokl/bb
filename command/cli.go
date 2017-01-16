@@ -3,6 +3,7 @@ package command
 import (
 	"github.com/alexhokl/go-bb-pr/client"
 	"github.com/alexhokl/go-bb-pr/models"
+	"github.com/spf13/cobra"
 )
 
 // Cli interface
@@ -42,4 +43,10 @@ func (cli *ManagerCli) UserCredential() *models.UserCredential {
 // Repo returns information on Repository
 func (cli *ManagerCli) Repo() *models.Repository {
 	return cli.repo
+}
+
+// ShowHelp shows the command help
+func (cli *ManagerCli) ShowHelp(cmd *cobra.Command, args []string) error {
+	cmd.HelpFunc()(cmd, args)
+	return nil
 }

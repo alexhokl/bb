@@ -12,8 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const version = "0.9.2"
-
 func main() {
 	cred, errCred := getCredentials()
 	if errCred != nil {
@@ -50,28 +48,11 @@ func newManagerCommand(cli *command.ManagerCli) *cobra.Command {
 		Short:        "A BitBucket Pull Request Manager",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			help()
-			return nil
+			return cli.ShowHelp(cmd, args)
 		},
 	}
 	command.AddCommands(cmd, cli)
 	return cmd
-}
-
-func showVersion() {
-	fmt.Printf("BitBucket Pull Request Manager version %s\n", version)
-}
-
-func help() {
-	fmt.Println("Here are the commands available")
-	fmt.Println("- list")
-	fmt.Println("- describe")
-	fmt.Println("- checkout")
-	fmt.Println("- approve")
-	fmt.Println("- unapprove")
-	fmt.Println("- decline")
-	fmt.Println("- merge")
-	fmt.Println("- open")
 }
 
 func getCredentials() (*models.UserCredential, error) {

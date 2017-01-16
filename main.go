@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const version = "0.9.2"
+
 func main() {
 	cred, errCred := getCredentials()
 	if errCred != nil {
@@ -57,7 +59,7 @@ func newManagerCommand(cli *command.ManagerCli) *cobra.Command {
 }
 
 func showVersion() {
-	fmt.Printf("BitBucket Pull Request Manager version %s\n", "0.9.0")
+	fmt.Printf("BitBucket Pull Request Manager version %s\n", version)
 }
 
 func help() {

@@ -40,14 +40,13 @@ func main() {
 			}
 			os.Exit(sterr.StatusCode)
 		}
-		fmt.Println(err)
 		os.Exit(1)
 	}
 }
 
 func newManagerCommand(cli *command.ManagerCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "go-bb-pr COMMAND",
+		Use:   "pr",
 		Short: "A BitBucket Pull Request Manager",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			help()

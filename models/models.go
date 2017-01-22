@@ -135,6 +135,25 @@ func (pr PullRequestInfo) ToString() string {
 		pr.Title)
 }
 
+// ToShortDescription retursn a short description of a pull request
+func (pr PullRequestDetail) ToShortDescription() string {
+	approveStr := ""
+	for _, reviewer := range pr.Participants {
+		if reviewer.Approved {
+			approveStr = fmt.Sprintf("%s\n\tApproved by %s", approveStr, reviewer.User)
+		}
+	}
+
+	return fmt.Sprintf("%d %s %s\n\t%s -> %s\n\t%s\n%s\n\n",
+		pr.ID,
+		formatLocalTime(pr.UpdatedOn),
+		pr.Author.DisplayName,
+		pr.Source.Branch.Name,
+		pr.Destination.Branch.Name,
+		pr.Title,
+		approveStr)
+}
+
 // ToString returns the description of a pull request
 func (pr PullRequestDetail) ToString() string {
 	return fmt.Sprintf("%d %s %s\n\t%s -> %s\n\t%s\n%s\n",

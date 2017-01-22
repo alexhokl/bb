@@ -38,11 +38,11 @@ func runList(cli *ManagerCli) error {
 		prInfo, _ := client.GetRequest(cred, repo, pr.ID)
 		isApproved := prInfo.IsApproved(cred.Username)
 		if isApproved {
-			color.Cyan(pr.ToString())
+			color.Cyan(prInfo.ToShortDescription())
 		} else if pr.Author.Username == cred.Username {
-			color.Blue(pr.ToString())
+			color.Blue(prInfo.ToShortDescription())
 		} else {
-			color.Red(pr.ToString())
+			color.Red(prInfo.ToShortDescription())
 		}
 	}
 	return nil

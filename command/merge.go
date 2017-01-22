@@ -20,7 +20,7 @@ func NewMergeCommand(cli *ManagerCli) *cobra.Command {
 		Use:   "merge [PR ID]",
 		Short: "Merge a pull request",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runMerge(cli, args)
+			return runMerge(cli, args, opts)
 		},
 	}
 
@@ -30,7 +30,7 @@ func NewMergeCommand(cli *ManagerCli) *cobra.Command {
 	return cmd
 }
 
-func runMerge(cli *ManagerCli, args []string) error {
+func runMerge(cli *ManagerCli, args []string, opts mergeOptions) error {
 	client := cli.Client()
 	cred := cli.UserCredential()
 	repo := cli.Repo()
@@ -49,6 +49,10 @@ func runMerge(cli *ManagerCli, args []string) error {
 		return err
 	}
 	fmt.Printf("Merged pull request [%d].\n", pullRequestNumber)
+
+	if opts.isKeepBranch {
+		return nil
+	}
 
 	currentBranchName, errCurrentBranch := git.GetCurrentBranchName()
 	if errCurrentBranch != nil {

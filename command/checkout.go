@@ -3,16 +3,16 @@ package command
 import (
 	"errors"
 	"fmt"
-	"os/exec"
 	"strconv"
 
+	"github.com/alexhokl/go-bb-pr/git"
 	"github.com/spf13/cobra"
 )
 
 // NewCheckoutCommand returns definition of command checkout
 func NewCheckoutCommand(cli *ManagerCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "checkout",
+		Use:   "checkout [PR ID]",
 		Short: "Checkout the latest code of the branch of a pull request",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runCheckout(cli, args)
@@ -26,14 +26,12 @@ func runCheckout(cli *ManagerCli, args []string) error {
 	cred := cli.UserCredential()
 	repo := cli.Repo()
 
-	cmdName := "git"
-	statusArgs := []string{"status", "-s"}
-	statusOutput, errStatus := exec.Command(cmdName, statusArgs...).Output()
+	statusOutput, errStatus := git.GetStatus()
 	if errStatus != nil {
 		return errStatus
 	}
 	if len(statusOutput) > 0 {
-		return errors.New("Working directory is not prestine. Please stash your work and try again.")
+		return errors.New("Working directory is not prestine. Please stash your work and try again")
 	}
 
 	pullRequestNumber, errParse := strconv.Atoi(args[0])
@@ -46,22 +44,19 @@ func runCheckout(cli *ManagerCli, args []string) error {
 		return err
 	}
 
-	fetchArgs := []string{"fetch"}
-	_, errFetch := exec.Command(cmdName, fetchArgs...).Output()
+	_, errFetch := git.Fetch()
 	if errFetch != nil {
 		return errFetch
 	}
 	fmt.Println("Downloaded the latest information from BitBucket.")
 
-	checkoutArgs := []string{"checkout", pr.Source.Branch.Name}
-	_, errCheckout := exec.Command(cmdName, checkoutArgs...).Output()
+	_, errCheckout := git.Checkout(pr.Source.Branch.Name)
 	if errCheckout != nil {
 		return errCheckout
 	}
 	fmt.Printf("Checked out branch %s.\n", pr.Source.Branch.Name)
 
-	pullArgs := []string{"pull"}
-	_, errPull := exec.Command(cmdName, pullArgs...).Output()
+	_, errPull := git.Pull()
 	if errPull != nil {
 		return errPull
 	}

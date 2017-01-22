@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/alexhokl/go-bb-pr/command"
+	"github.com/alexhokl/go-bb-pr/git"
 	"github.com/alexhokl/go-bb-pr/models"
 	"github.com/spf13/cobra"
 )
@@ -72,9 +72,7 @@ func getCredentials() (*models.UserCredential, error) {
 }
 
 func getRepository() (*models.Repository, error) {
-	cmdName := "git"
-	cmdArgs := []string{"remote", "get-url", "origin"}
-	cmdOut, err := exec.Command(cmdName, cmdArgs...).Output()
+	cmdOut, err := git.GetOriginURL()
 	if err != nil {
 		if strings.Contains(err.Error(), "129") {
 			return nil, errors.New("git remote get-url is not supported. Please upgrade to the latest version of git")

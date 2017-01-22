@@ -1,6 +1,7 @@
 package git
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
 )
@@ -68,6 +69,13 @@ func Difftool(branchName string) error {
 // DiffStat executes git diff to retrieve diff stat
 func DiffStat(branchName string) (string, error) {
 	args := []string{"diff", "--stat", branchName}
+	return execute(args)
+}
+
+// GetBranchCommitComments executes git log command to retrieve branch commit comments
+func GetBranchCommitComments(sourceBranchName string, destinationBranchName string) (string, error) {
+	branches := fmt.Sprintf("%s..%s", destinationBranchName, sourceBranchName)
+	args := []string{"log", branches, "--no-merges", "--pretty=format:'%s %b'"}
 	return execute(args)
 }
 

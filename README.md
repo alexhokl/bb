@@ -2,16 +2,18 @@
 
 This is a command line tool to help working with BitBucket pull requests.
 
-#### Commands
+Usage:
+  pr [command]
 
-Command | Description | Example
---- | --- | ---
-list | Lists all open pull requests | `pr list`
-describe | Dumps information of the specified pull request | `pr describe 939`
-checkout | Checkouts the branch of the specified pull request | `pr checkout 939`
-approve | Approves the specified pull request | `pr approve 939`
-merge | Merges the specified pull request | `pr merge 939`
-unapprove | Un-approves the specified pull request | `pr unapprove 939`
-decline | Declines the specified pull request | `pr decline 939`
-merge | Merges the specified pull request | `pr merge 939`
-open | Opens the specified pull request in a browser | `pr open 939`
+Available Commands:
+  approve     Approve a pull request
+  checkout    Checkout the latest code of the branch of a pull request
+  decline     Decline a pull request
+  describe    Describe a pull request
+  list        List pull requests
+  merge       Merge a pull request
+  open        Open the web page of the specified pull request in a browser
+  unapprove   Unapprove a pull request
+
+Use "pr [command] --help" for more information about a command.
+

@@ -45,7 +45,7 @@ func main() {
 func newManagerCommand(cli *command.ManagerCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "pr",
-		Short:        "A BitBucket Pull Request Manager",
+		Short:        "BitBucket Pull Request Manager",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cli.ShowHelp(cmd, args)

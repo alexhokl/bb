@@ -7,8 +7,9 @@ import (
 )
 
 type listOptions struct {
-	isQuiet    bool
-	isOneLiner bool
+	isQuiet              bool
+	isOneLiner           bool
+	isIncldeCreationTime bool
 }
 
 // NewListCommand returns definition of command list
@@ -26,6 +27,7 @@ func NewListCommand(cli *ManagerCli) *cobra.Command {
 	flags := cmd.Flags()
 	flags.BoolVarP(&opts.isQuiet, "quiet", "q", false, "List IDs only")
 	flags.BoolVar(&opts.isOneLiner, "oneline", false, "List in oneliners")
+	flags.BoolVar(&opts.isIncldeCreationTime, "created-time", false, "Include created time")
 
 	return cmd
 }
@@ -53,7 +55,7 @@ func runList(cli *ManagerCli, opts listOptions) error {
 		} else if opts.isOneLiner {
 			printFunc(prInfo.ToOneLiner())
 		} else {
-			printFunc(prInfo.ToShortDescription())
+			printFunc(prInfo.ToShortDescription(opts.isIncldeCreationTime))
 		}
 	}
 	return nil

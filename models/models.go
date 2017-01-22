@@ -124,19 +124,8 @@ func (pr PullRequestDetail) IsApproved(username string) bool {
 	return false
 }
 
-// ToString returns the description of a pull request
-func (pr PullRequestInfo) ToString() string {
-	return fmt.Sprintf("%d %s %s\n\t%s -> %s\n\t%s\n",
-		pr.ID,
-		formatLocalTime(pr.UpdatedOn),
-		pr.Author.DisplayName,
-		pr.Source.Branch.Name,
-		pr.Destination.Branch.Name,
-		pr.Title)
-}
-
 // ToShortDescription retursn a short description of a pull request
-func (pr PullRequestDetail) ToShortDescription() string {
+func (pr PullRequestDetail) ToShortDescription(isIncludeCreatedOn bool) string {
 	approveStr := ""
 	for _, reviewer := range pr.Participants {
 		if reviewer.Approved {
@@ -144,19 +133,31 @@ func (pr PullRequestDetail) ToShortDescription() string {
 		}
 	}
 
-	return fmt.Sprintf("%d %s %s\n\t%s -> %s\n\t%s\n%s\n\n",
-		pr.ID,
-		formatLocalTime(pr.UpdatedOn),
-		pr.Author.DisplayName,
-		pr.Source.Branch.Name,
-		pr.Destination.Branch.Name,
-		pr.Title,
-		approveStr)
+	if isIncludeCreatedOn {
+		return fmt.Sprintf("%d Updated:%s Created by:%s at %s\n\t%s -> %s\n\t%s\n%s\n\n",
+			pr.ID,
+			formatLocalTime(pr.UpdatedOn),
+			pr.Author.DisplayName,
+			formatLocalTime(pr.CreatedOn),
+			pr.Source.Branch.Name,
+			pr.Destination.Branch.Name,
+			pr.Title,
+			approveStr)
+	} else {
+		return fmt.Sprintf("%d Updated:%s Created by:%s\n\t%s -> %s\n\t%s\n%s\n\n",
+			pr.ID,
+			formatLocalTime(pr.UpdatedOn),
+			pr.Author.DisplayName,
+			pr.Source.Branch.Name,
+			pr.Destination.Branch.Name,
+			pr.Title,
+			approveStr)
+	}
 }
 
 // ToOneLiner retursn a short description of a pull request
 func (pr PullRequestDetail) ToOneLiner() string {
-	return fmt.Sprintf("%d %s %s %s\n",
+	return fmt.Sprintf("%d Updated:%s %s %s\n",
 		pr.ID,
 		formatLocalTime(pr.UpdatedOn),
 		pr.Author.DisplayName,
@@ -165,10 +166,11 @@ func (pr PullRequestDetail) ToOneLiner() string {
 
 // ToString returns the description of a pull request
 func (pr PullRequestDetail) ToString() string {
-	return fmt.Sprintf("%d %s %s\n\t%s -> %s\n\t%s\n%s\n",
+	return fmt.Sprintf("%d Updated:%s Created by:%s at %s\n\t%s -> %s\n\t%s\n%s\n",
 		pr.ID,
 		formatLocalTime(pr.UpdatedOn),
 		pr.Author.DisplayName,
+		formatLocalTime(pr.CreatedOn),
 		pr.Source.Branch.Name,
 		pr.Destination.Branch.Name,
 		pr.Title,

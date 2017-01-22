@@ -3,6 +3,7 @@ package command
 import (
 	"fmt"
 
+	"github.com/alexhokl/go-bb-pr/models"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -10,6 +11,8 @@ import (
 type listOptions struct {
 	isQuiet bool
 }
+
+type print func(msg string, args ...interface{})
 
 // NewListCommand returns definition of command list
 func NewListCommand(cli *ManagerCli) *cobra.Command {
@@ -46,26 +49,22 @@ func runList(cli *ManagerCli, opts listOptions) error {
 
 	for _, pr := range prList {
 		prInfo, _ := client.GetRequest(cred, repo, pr.ID)
-		isApproved := prInfo.IsApproved(cred.Username)
-		if isApproved {
-			if opts.isQuiet {
-				color.Cyan(fmt.Sprintf("%d", prInfo.ID))
-			} else {
-				color.Cyan(prInfo.ToShortDescription())
-			}
-		} else if pr.Author.Username == cred.Username {
-			if opts.isQuiet {
-				color.Blue(fmt.Sprintf("%d", prInfo.ID))
-			} else {
-				color.Blue(prInfo.ToShortDescription())
-			}
+		printFunc := getPrint(prInfo, cred)
+		if opts.isQuiet {
+			printFunc("%d", prInfo.ID)
 		} else {
-			if opts.isQuiet {
-				color.Red(fmt.Sprintf("%d", prInfo.ID))
-			} else {
-				color.Red(prInfo.ToShortDescription())
-			}
+			printFunc(prInfo.ToShortDescription())
 		}
 	}
 	return nil
+}
+
+func getPrint(pr *models.PullRequestDetail, cred *models.UserCredential) print {
+	if pr.IsApproved(cred.Username) {
+		return color.Cyan
+	}
+	if pr.Author.Username == cred.Username {
+		return color.Blue
+	}
+	return color.Red
 }

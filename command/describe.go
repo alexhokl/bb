@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/alexhokl/go-bb-pr/models"
-	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -40,14 +39,8 @@ func runDescribe(cli *ManagerCli, args []string) error {
 		return errActivities
 	}
 
-	isApproved := pr.IsApproved(cred.Username)
-	if isApproved {
-		color.Cyan(pr.ToString())
-	} else if pr.Author.Username == cred.Username {
-		color.Blue(pr.ToString())
-	} else {
-		color.Red(pr.ToString())
-	}
+	printFunc := getPrint(pr, cred)
+	printFunc(pr.ToString())
 
 	fmt.Println("")
 

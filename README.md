@@ -25,3 +25,13 @@ Use "go-bb-pr [command] --help" for more information about a command.
 If the machine has Go installed, simply run `go get -u github.com/alexhokl/go-bb-pr`. If not, download the latest binary from [release](https://github.com/alexhokl/go-bb-pr/releases) page, and drop it to a directory where it is in of the directories specified in `PATH` environment variable.
 
 Login to BitBucket is required and it should be set in environment variable `bbuser` and `bbpassword`. Currently, all the API requests are made in encrypted traffic but credentials stored in environment variables are not encrypted. This issue should be fixed when this tool has a production release.
+
+### Build
+
+To create a local build, simply execute `go install`.
+
+To create a cross-machine build, for instance, building a Windows executable on a Mac,
+
+```console
+GOOS=windows GOARCH=amd64 go build -o go-bb-pr.win64.exe
+```

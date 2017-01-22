@@ -1,6 +1,8 @@
 package command
 
 import (
+	"fmt"
+
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -25,6 +27,11 @@ func runList(cli *ManagerCli) error {
 	prList, err := client.ListRequests(cred, repo)
 	if err != nil {
 		return err
+	}
+
+	if len(prList) == 0 {
+		fmt.Println("There are no open pull requests.")
+		return nil
 	}
 
 	for _, pr := range prList {

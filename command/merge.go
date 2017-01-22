@@ -1,6 +1,7 @@
 package command
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -27,5 +28,11 @@ func runMerge(cli *ManagerCli, args []string) error {
 		return errParse
 	}
 
-	return client.MergeRequest(cred, repo, pullRequestNumber)
+	err := client.MergeRequest(cred, repo, pullRequestNumber)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Merged pull request [%d].\n", pullRequestNumber)
+	return nil
 }

@@ -2,6 +2,7 @@ package command
 
 import (
 	"errors"
+	"fmt"
 	"os/exec"
 	"strconv"
 
@@ -50,18 +51,21 @@ func runCheckout(cli *ManagerCli, args []string) error {
 	if errFetch != nil {
 		return errFetch
 	}
+	fmt.Println("Downloaded the latest information from BitBucket.")
 
 	checkoutArgs := []string{"checkout", pr.Source.Branch.Name}
 	_, errCheckout := exec.Command(cmdName, checkoutArgs...).Output()
 	if errCheckout != nil {
 		return errCheckout
 	}
+	fmt.Printf("Checked out branch %s.\n", pr.Source.Branch.Name)
 
 	pullArgs := []string{"pull"}
 	_, errPull := exec.Command(cmdName, pullArgs...).Output()
 	if errPull != nil {
 		return errPull
 	}
+	fmt.Printf("Pulled the latest code of branch %s.\n", pr.Source.Branch.Name)
 
 	return nil
 }

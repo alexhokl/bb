@@ -1,6 +1,7 @@
 package command
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -27,5 +28,11 @@ func runUnapprove(cli *ManagerCli, args []string) error {
 		return errParse
 	}
 
-	return client.UnapproveRequest(cred, repo, pullRequestNumber)
+	err := client.UnapproveRequest(cred, repo, pullRequestNumber)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Un-approved pull request [%d].\n", pullRequestNumber)
+	return nil
 }

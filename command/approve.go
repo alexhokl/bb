@@ -1,6 +1,7 @@
 package command
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -9,7 +10,7 @@ import (
 // NewApproveCommand returns definition of command approve
 func NewApproveCommand(cli *ManagerCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "approve",
+		Use:   "approve [PR ID]",
 		Short: "Approve a pull request",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runApprove(cli, args)
@@ -27,5 +28,11 @@ func runApprove(cli *ManagerCli, args []string) error {
 		return errParse
 	}
 
-	return client.ApproveRequest(cred, repo, pullRequestNumber)
+	err := client.ApproveRequest(cred, repo, pullRequestNumber)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Approved pull request [%d].\n", pullRequestNumber)
+	return nil
 }

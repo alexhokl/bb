@@ -1,6 +1,7 @@
 package command
 
 import (
+	"fmt"
 	"os/exec"
 	"runtime"
 	"strconv"
@@ -45,5 +46,6 @@ func runOpen(cli *ManagerCli, args []string) error {
 		return errOpen
 	}
 
+	fmt.Printf("Opened %s in a browser.\n", pr.Links.Html.Href)
 	return nil
 }

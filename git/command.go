@@ -1,6 +1,9 @@
 package git
 
-import "os/exec"
+import (
+	"os/exec"
+	"strings"
+)
 
 // Checkout executes git checkout commnad
 func Checkout(branchName string) (string, error) {
@@ -35,12 +38,36 @@ func Fetch() (string, error) {
 // GetCurrentBranchName executes git symbolic-ref to retrieve current branch name
 func GetCurrentBranchName() (string, error) {
 	args := []string{"symbolic-ref", "--short", "HEAD"}
+	output, err := execute(args)
+	if err != nil {
+		return output, err
+	}
+	name := strings.Replace(output, "\n", "", -1)
+	return name, nil
+}
+
+// DeleteBranch executes git branch command to delete a branch
+func DeleteBranch(branchName string) (string, error) {
+	args := []string{"branch", "-D", branchName}
 	return execute(args)
 }
 
-// DeleteBranch execute git branch command to delete a branch
-func DeleteBranch(branchName string) (string, error) {
-	args := []string{"branch", "-D", branchName}
+// Merge executes git merge command to merge from a branch
+func Merge(branchName string) (string, error) {
+	args := []string{"merge", "--no-edit", branchName}
+	return execute(args)
+}
+
+// Difftool executes git difftool command
+func Difftool(branchName string) error {
+	args := []string{"difftool", branchName}
+	_, err := execute(args)
+	return err
+}
+
+// DiffStat executes git diff to retrieve diff stat
+func DiffStat(branchName string) (string, error) {
+	args := []string{"diff", "--stat", branchName}
 	return execute(args)
 }
 

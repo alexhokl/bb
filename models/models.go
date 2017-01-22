@@ -154,6 +154,15 @@ func (pr PullRequestDetail) ToShortDescription() string {
 		approveStr)
 }
 
+// ToOneLiner retursn a short description of a pull request
+func (pr PullRequestDetail) ToOneLiner() string {
+	return fmt.Sprintf("%d %s %s %s\n",
+		pr.ID,
+		formatLocalTime(pr.UpdatedOn),
+		pr.Author.DisplayName,
+		pr.Title)
+}
+
 // ToString returns the description of a pull request
 func (pr PullRequestDetail) ToString() string {
 	return fmt.Sprintf("%d %s %s\n\t%s -> %s\n\t%s\n%s\n",

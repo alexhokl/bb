@@ -3,16 +3,13 @@ package command
 import (
 	"fmt"
 
-	"github.com/alexhokl/go-bb-pr/models"
-	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
 type listOptions struct {
-	isQuiet bool
+	isQuiet    bool
+	isOneLiner bool
 }
-
-type print func(msg string, args ...interface{})
 
 // NewListCommand returns definition of command list
 func NewListCommand(cli *ManagerCli) *cobra.Command {
@@ -28,6 +25,7 @@ func NewListCommand(cli *ManagerCli) *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.BoolVarP(&opts.isQuiet, "quiet", "q", false, "List IDs only")
+	flags.BoolVar(&opts.isOneLiner, "oneline", false, "List in oneliners")
 
 	return cmd
 }
@@ -52,19 +50,11 @@ func runList(cli *ManagerCli, opts listOptions) error {
 		printFunc := getPrint(prInfo, cred)
 		if opts.isQuiet {
 			printFunc("%d", prInfo.ID)
+		} else if opts.isOneLiner {
+			printFunc(prInfo.ToOneLiner())
 		} else {
 			printFunc(prInfo.ToShortDescription())
 		}
 	}
 	return nil
-}
-
-func getPrint(pr *models.PullRequestDetail, cred *models.UserCredential) print {
-	if pr.IsApproved(cred.Username) {
-		return color.Cyan
-	}
-	if pr.Author.Username == cred.Username {
-		return color.Blue
-	}
-	return color.Red
 }

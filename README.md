@@ -3,7 +3,7 @@
 This is a command line tool to help working with BitBucket pull requests.
 
 Usage:
-  pr [command]
+  go-bb-pr [command]
 
 Available Commands:
 
@@ -18,4 +18,8 @@ merge      | Merge a pull request
 open       | Open the web page of the specified pull request in a browser
 unapprove  | Unapprove a pull request
 
-Use "pr [command] --help" for more information about a command.
+Use "go-bb-pr [command] --help" for more information about a command.
+
+### Installation
+
+If the machine has Go installed, simply run `go get -u github.com/alexhokl/go-bb-pr`. If not, download the latest binary from [release](https://github.com/alexhokl/go-bb-pr/releases) page, and drop it to a directory where it is in of the directories specified in `PATH` environment variable.

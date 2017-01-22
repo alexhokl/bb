@@ -1,6 +1,8 @@
 package client
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,6 +20,7 @@ type APIClient interface {
 	DeclineRequest(cred *models.UserCredential, repo *models.Repository, id int) error
 	MergeRequest(cred *models.UserCredential, repo *models.Repository, id int) error
 	ActivityRequest(cred *models.UserCredential, repo *models.Repository, id int) ([]models.PullRequestActivity, error)
+	CreateRequest(cred *models.UserCredential, repo *models.Repository, req *models.PullRequestCreateRequest) error
 }
 
 // Client struct
@@ -45,6 +48,17 @@ func newRequest(cred *models.UserCredential, verb string, path string) *http.Req
 	req, _ := http.NewRequest(verb, path, nil)
 	req.SetBasicAuth(cred.Username, cred.Password)
 	return req
+}
+
+func newPostRequest(cred *models.UserCredential, path string, data interface{}) (*http.Request, error) {
+	buf := new(bytes.Buffer)
+	err := json.NewEncoder(buf).Encode(data)
+	if err != nil {
+		return nil, err
+	}
+	req, _ := http.NewRequest("POST", path, buf)
+	req.SetBasicAuth(cred.Username, cred.Password)
+	return req, err
 }
 
 func dumpResponse(resp *http.Response) error {

@@ -101,6 +101,15 @@ type CommentContent struct {
 	Raw string `json:"raw"`
 }
 
+// PullRequestCreateRequest struct
+type PullRequestCreateRequest struct {
+	Destination Commit     `json:"destination"`
+	Source      Commit     `json:"source"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	Reviewers   []Reviewer `json:"reviewers"`
+}
+
 // Repository struct
 type Repository struct {
 	Org  string
@@ -143,16 +152,15 @@ func (pr PullRequestDetail) ToShortDescription(isIncludeCreatedOn bool) string {
 			pr.Destination.Branch.Name,
 			pr.Title,
 			approveStr)
-	} else {
-		return fmt.Sprintf("%d Updated:%s Created by:%s\n\t%s -> %s\n\t%s\n%s\n\n",
-			pr.ID,
-			formatLocalTime(pr.UpdatedOn),
-			pr.Author.DisplayName,
-			pr.Source.Branch.Name,
-			pr.Destination.Branch.Name,
-			pr.Title,
-			approveStr)
 	}
+	return fmt.Sprintf("%d Updated:%s Created by:%s\n\t%s -> %s\n\t%s\n%s\n\n",
+		pr.ID,
+		formatLocalTime(pr.UpdatedOn),
+		pr.Author.DisplayName,
+		pr.Source.Branch.Name,
+		pr.Destination.Branch.Name,
+		pr.Title,
+		approveStr)
 }
 
 // ToOneLiner retursn a short description of a pull request

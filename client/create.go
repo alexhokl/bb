@@ -7,22 +7,22 @@ import (
 )
 
 // CreateRequest makes an API call to create a pull requests
-func (client *Client) CreateRequest(cred *models.UserCredential, repo *models.Repository, pr *models.PullRequestCreateRequest) error {
+func (client *Client) CreateRequest(cred *models.UserCredential, repo *models.Repository, pr *models.PullRequestCreateRequest) (*models.PullRequestDetail, error) {
 	path := getBasePath(repo)
 
 	req, errReq := newPostRequest(cred, path, pr)
 	if errReq != nil {
-		return errReq
+		return nil, errReq
 	}
 	resp, err := client.client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 201 {
 		msg := getErrorResponseMessage(resp)
-		return errors.New(msg)
+		return nil, errors.New(msg)
 	}
 
-	return nil
+	return parse(resp)
 }

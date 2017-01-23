@@ -10,6 +10,7 @@ Available Commands:
 Command | Description
 --- | ---
 approve    | Approve a pull request
+create     | Create a pull request
 checkout   | Checkout the latest code of the branch of a pull request
 decline    | Decline a pull request
 describe   | Describe a pull request

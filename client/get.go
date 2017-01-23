@@ -1,10 +1,8 @@
 package client
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/alexhokl/go-bb-pr/models"
 )
@@ -23,13 +21,4 @@ func (client *Client) GetRequest(cred *models.UserCredential, repo *models.Repos
 		return nil, errors.New(msg)
 	}
 	return parse(resp)
-}
-
-func parse(resp *http.Response) (*models.PullRequestDetail, error) {
-	var jsonObj models.PullRequestDetail
-	err := json.NewDecoder(resp.Body).Decode(&jsonObj)
-	if err != nil {
-		return nil, err
-	}
-	return &jsonObj, nil
 }

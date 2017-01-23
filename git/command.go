@@ -74,7 +74,7 @@ func DiffStat(branchName string) (string, error) {
 
 // GetBranchCommitComments executes git log command to retrieve branch commit comments
 func GetBranchCommitComments(sourceBranchName string, destinationBranchName string) (string, error) {
-	branches := fmt.Sprintf("%s..%s", destinationBranchName, sourceBranchName)
+	branches := fmt.Sprintf("origin/%s..origin/%s", destinationBranchName, sourceBranchName)
 	args := []string{"log", branches, "--no-merges", "--pretty=format:'%s %b'"}
 	return execute(args)
 }

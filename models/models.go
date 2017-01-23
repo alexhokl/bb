@@ -59,9 +59,14 @@ type User struct {
 	DisplayName string `json:"display_name"`
 }
 
+// CommitBranch struct
+type CommitBranch struct {
+	Branch Branch `json:"branch"`
+}
+
 // Commit struct
 type Commit struct {
-	Branch Branch     `json:"branch"`
+	CommitBranch
 	Commit CommitInfo `json:"commit"`
 }
 
@@ -103,11 +108,11 @@ type CommentContent struct {
 
 // PullRequestCreateRequest struct
 type PullRequestCreateRequest struct {
-	Destination Commit     `json:"destination"`
-	Source      Commit     `json:"source"`
-	Title       string     `json:"title"`
-	Description string     `json:"description"`
-	Reviewers   []Reviewer `json:"reviewers"`
+	Destination CommitBranch `json:"destination"`
+	Source      CommitBranch `json:"source"`
+	Title       string       `json:"title"`
+	Description string       `json:"description"`
+	Reviewers   []Reviewer   `json:"reviewers"`
 }
 
 // Repository struct

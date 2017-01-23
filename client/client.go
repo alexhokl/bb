@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/alexhokl/go-bb-pr/models"
 )
@@ -20,7 +21,7 @@ type APIClient interface {
 	DeclineRequest(cred *models.UserCredential, repo *models.Repository, id int) error
 	MergeRequest(cred *models.UserCredential, repo *models.Repository, id int) error
 	ActivityRequest(cred *models.UserCredential, repo *models.Repository, id int) ([]models.PullRequestActivity, error)
-	CreateRequest(cred *models.UserCredential, repo *models.Repository, req *models.PullRequestCreateRequest) error
+	CreateRequest(cred *models.UserCredential, repo *models.Repository, req *models.PullRequestCreateRequest) (*models.PullRequestDetail, error)
 }
 
 // Client struct
@@ -56,8 +57,11 @@ func newPostRequest(cred *models.UserCredential, path string, data interface{}) 
 	if err != nil {
 		return nil, err
 	}
-	req, _ := http.NewRequest("POST", path, buf)
+	jsonStr := string(buf.Bytes())
+	replacedStr := strings.Replace(jsonStr, "'", "", -1)
+	req, _ := http.NewRequest("POST", path, bytes.NewBufferString(replacedStr))
 	req.SetBasicAuth(cred.Username, cred.Password)
+	req.Header.Set("Content-Type", "application/json")
 	return req, err
 }
 
@@ -72,4 +76,22 @@ func dumpResponse(resp *http.Response) error {
 func getErrorResponseMessage(resp *http.Response) string {
 	return fmt.Sprintf(
 		"Failed response (status code: %d): %s", resp.StatusCode, resp.Status)
+}
+
+func parse(resp *http.Response) (*models.PullRequestDetail, error) {
+	var jsonObj models.PullRequestDetail
+	err := json.NewDecoder(resp.Body).Decode(&jsonObj)
+	if err != nil {
+		return nil, err
+	}
+	return &jsonObj, nil
+}
+
+func parseList(resp *http.Response) (*pullRequestListResponse, error) {
+	var jsonObj pullRequestListResponse
+	err := json.NewDecoder(resp.Body).Decode(&jsonObj)
+	if err != nil {
+		return nil, err
+	}
+	return &jsonObj, nil
 }

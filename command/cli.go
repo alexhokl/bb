@@ -23,6 +23,10 @@ type ManagerCli struct {
 
 type print func(msg string, args ...interface{})
 
+type idOption struct {
+	id int
+}
+
 // NewManagerCli creates a new manager cli instance
 func NewManagerCli(cred *models.UserCredential, repo *models.Repository) *ManagerCli {
 	cli := ManagerCli{

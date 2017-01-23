@@ -3,13 +3,13 @@ package command
 import (
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/alexhokl/go-bb-pr/git"
 	"github.com/spf13/cobra"
 )
 
 type checkoutOptions struct {
+	idOption
 	isShowDifftool           bool
 	isShowStat               bool
 	isNoMergeFromDestination bool
@@ -20,14 +20,19 @@ func NewCheckoutCommand(cli *ManagerCli) *cobra.Command {
 	opts := checkoutOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "checkout [PR ID]",
-		Short: "Checkout the latest code of the branch of a pull request",
+		Use:   "checkout",
+		Short: "Checkout the latest code of the branch of the specified pull request",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runCheckout(cli, args, opts)
+			if len(args) != 0 {
+				cli.ShowHelp(cmd, args)
+				return nil
+			}
+			return runCheckout(cli, opts)
 		},
 	}
 
 	flags := cmd.Flags()
+	flags.IntVarP(&opts.id, "id", "i", 0, "Pull request ID")
 	flags.BoolVarP(&opts.isShowDifftool, "difftool", "d", false, "Show difftool after checkout")
 	flags.BoolVarP(&opts.isShowStat, "stat", "s", false, "Show diff stats after checkout")
 	flags.BoolVar(&opts.isNoMergeFromDestination, "no-merge", false, "Do not merge from destination branch during checkout")
@@ -35,7 +40,11 @@ func NewCheckoutCommand(cli *ManagerCli) *cobra.Command {
 	return cmd
 }
 
-func runCheckout(cli *ManagerCli, args []string, opts checkoutOptions) error {
+func runCheckout(cli *ManagerCli, opts checkoutOptions) error {
+	if opts.id <= 0 {
+		return errors.New("Invalid pull request ID")
+	}
+
 	client := cli.Client()
 	cred := cli.UserCredential()
 	repo := cli.Repo()
@@ -48,12 +57,7 @@ func runCheckout(cli *ManagerCli, args []string, opts checkoutOptions) error {
 		return errors.New("Working directory is not prestine. Please stash your work and try again")
 	}
 
-	pullRequestNumber, errParse := strconv.Atoi(args[0])
-	if errParse != nil {
-		return errParse
-	}
-
-	pr, err := client.GetRequest(cred, repo, pullRequestNumber)
+	pr, err := client.GetRequest(cred, repo, opts.id)
 	if err != nil {
 		return err
 	}

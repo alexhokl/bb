@@ -20,6 +20,10 @@ func NewListCommand(cli *ManagerCli) *cobra.Command {
 		Use:   "list",
 		Short: "List pull requests",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 0 {
+				cli.ShowHelp(cmd, args)
+				return nil
+			}
 			return runList(cli, opts)
 		},
 	}

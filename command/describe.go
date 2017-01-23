@@ -1,8 +1,8 @@
 package command
 
 import (
+	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/alexhokl/go-bb-pr/models"
 	"github.com/spf13/cobra"
@@ -10,31 +10,41 @@ import (
 
 // NewDescribeCommand returns definition of command describe
 func NewDescribeCommand(cli *ManagerCli) *cobra.Command {
+	opts := idOption{}
+
 	cmd := &cobra.Command{
 		Use:   "describe",
-		Short: "Describe a pull request",
+		Short: "Describe the specified pull request",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runDescribe(cli, args)
+			if len(args) != 0 {
+				cli.ShowHelp(cmd, args)
+				return nil
+			}
+			return runDescribe(cli, opts)
 		},
 	}
+
+	flags := cmd.Flags()
+	flags.IntVarP(&opts.id, "id", "i", 0, "Pull request ID")
+
 	return cmd
 }
 
-func runDescribe(cli *ManagerCli, args []string) error {
+func runDescribe(cli *ManagerCli, opts idOption) error {
+	if opts.id <= 0 {
+		return errors.New("Invalid pull request ID")
+	}
+
 	client := cli.Client()
 	cred := cli.UserCredential()
 	repo := cli.Repo()
-	pullRequestNumber, errParse := strconv.Atoi(args[0])
-	if errParse != nil {
-		return errParse
-	}
 
-	pr, err := client.GetRequest(cred, repo, pullRequestNumber)
+	pr, err := client.GetRequest(cred, repo, opts.id)
 	if err != nil {
 		return err
 	}
 
-	activities, errActivities := client.ActivityRequest(cred, repo, pullRequestNumber)
+	activities, errActivities := client.ActivityRequest(cred, repo, opts.id)
 	if errActivities != nil {
 		return errActivities
 	}

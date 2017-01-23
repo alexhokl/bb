@@ -1,14 +1,15 @@
 package command
 
 import (
+	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/alexhokl/go-bb-pr/git"
 	"github.com/spf13/cobra"
 )
 
 type approveOptions struct {
+	idOption
 	isKeepBranch bool
 }
 
@@ -17,38 +18,43 @@ func NewApproveCommand(cli *ManagerCli) *cobra.Command {
 	opts := approveOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "approve [PR ID]",
-		Short: "Approve a pull request",
+		Use:   "approve",
+		Short: "Approve the specified pull request",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runApprove(cli, args, opts)
+			if len(args) != 0 {
+				cli.ShowHelp(cmd, args)
+				return nil
+			}
+			return runApprove(cli, opts)
 		},
 	}
 
 	flags := cmd.Flags()
+	flags.IntVarP(&opts.id, "id", "i", 0, "Pull request ID")
 	flags.BoolVarP(&opts.isKeepBranch, "keep-branch", "k", false, "Keep local branch after approval")
 
 	return cmd
 }
 
-func runApprove(cli *ManagerCli, args []string, opts approveOptions) error {
+func runApprove(cli *ManagerCli, opts approveOptions) error {
+	if opts.id <= 0 {
+		return errors.New("Invalid pull request ID")
+	}
+
 	client := cli.Client()
 	cred := cli.UserCredential()
 	repo := cli.Repo()
-	pullRequestNumber, errParse := strconv.Atoi(args[0])
-	if errParse != nil {
-		return errParse
-	}
 
-	pr, errGet := client.GetRequest(cred, repo, pullRequestNumber)
+	pr, errGet := client.GetRequest(cred, repo, opts.id)
 	if errGet != nil {
 		return errGet
 	}
 
-	err := client.ApproveRequest(cred, repo, pullRequestNumber)
+	err := client.ApproveRequest(cred, repo, opts.id)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Approved pull request [%d].\n", pullRequestNumber)
+	fmt.Printf("Approved pull request [%d].\n", opts.id)
 
 	if opts.isKeepBranch {
 		return nil

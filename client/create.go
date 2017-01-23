@@ -6,7 +6,7 @@ import (
 	"github.com/alexhokl/go-bb-pr/models"
 )
 
-// CreateRequest makes an API call to create a pull requests
+// CreateRequest makes an API call to create the specified pull requests
 func (client *Client) CreateRequest(cred *models.UserCredential, repo *models.Repository, pr *models.PullRequestCreateRequest) (*models.PullRequestDetail, error) {
 	path := getBasePath(repo)
 

@@ -14,7 +14,7 @@ type pullRequestActivityListResponse struct {
 	Next  string                       `json:"next"`
 }
 
-// ActivityRequest makes API call(s) to retrieve activities of a pull request
+// ActivityRequest makes API call(s) to retrieve activities of the specified pull request
 func (client *Client) ActivityRequest(cred *models.UserCredential, repo *models.Repository, id int) ([]models.PullRequestActivity, error) {
 	var list []models.PullRequestActivity
 

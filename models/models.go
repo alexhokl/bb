@@ -138,7 +138,7 @@ func (pr PullRequestDetail) IsApproved(username string) bool {
 	return false
 }
 
-// ToShortDescription retursn a short description of a pull request
+// ToShortDescription retursn a short description of the specified pull request
 func (pr PullRequestDetail) ToShortDescription(isIncludeCreatedOn bool) string {
 	approveStr := ""
 	for _, reviewer := range pr.Participants {
@@ -168,7 +168,7 @@ func (pr PullRequestDetail) ToShortDescription(isIncludeCreatedOn bool) string {
 		approveStr)
 }
 
-// ToOneLiner retursn a short description of a pull request
+// ToOneLiner retursn a short description of the specified pull request
 func (pr PullRequestDetail) ToOneLiner() string {
 	return fmt.Sprintf("%d Updated:%s %s %s\n",
 		pr.ID,
@@ -177,7 +177,7 @@ func (pr PullRequestDetail) ToOneLiner() string {
 		pr.Title)
 }
 
-// ToString returns the description of a pull request
+// ToString returns the description of the specified pull request
 func (pr PullRequestDetail) ToString() string {
 	return fmt.Sprintf("%d Updated:%s Created by:%s at %s\n\t%s -> %s\n\t%s\n%s\n",
 		pr.ID,

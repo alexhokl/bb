@@ -22,9 +22,13 @@ func NewCreateCommand(cli *ManagerCli) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "create",
-		Short: "Create a pull request",
+		Short: "Create the specified pull request",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runCreate(cli, args, opts)
+			if len(args) != 0 {
+				cli.ShowHelp(cmd, args)
+				return nil
+			}
+			return runCreate(cli, opts)
 		},
 	}
 
@@ -37,7 +41,7 @@ func NewCreateCommand(cli *ManagerCli) *cobra.Command {
 	return cmd
 }
 
-func runCreate(cli *ManagerCli, args []string, opts createOptions) error {
+func runCreate(cli *ManagerCli, opts createOptions) error {
 	if opts.destinationBranchName == "" {
 		return errors.New("Destination branch is not specified")
 	}

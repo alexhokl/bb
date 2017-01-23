@@ -1,38 +1,48 @@
 package command
 
 import (
+	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/spf13/cobra"
 )
 
 // NewDeclineCommand returns definition of command decline
 func NewDeclineCommand(cli *ManagerCli) *cobra.Command {
+	opts := idOption{}
+
 	cmd := &cobra.Command{
 		Use:   "decline",
-		Short: "Decline a pull request",
+		Short: "Decline the specified pull request",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runDecline(cli, args)
+			if len(args) != 0 {
+				cli.ShowHelp(cmd, args)
+				return nil
+			}
+			return runDecline(cli, opts)
 		},
 	}
+
+	flags := cmd.Flags()
+	flags.IntVarP(&opts.id, "id", "i", 0, "Pull request ID")
+
 	return cmd
 }
 
-func runDecline(cli *ManagerCli, args []string) error {
+func runDecline(cli *ManagerCli, opts idOption) error {
+	if opts.id <= 0 {
+		return errors.New("Invalid pull request ID")
+	}
+
 	client := cli.Client()
 	cred := cli.UserCredential()
 	repo := cli.Repo()
-	pullRequestNumber, errParse := strconv.Atoi(args[0])
-	if errParse != nil {
-		return errParse
-	}
 
-	err := client.DeclineRequest(cred, repo, pullRequestNumber)
+	err := client.DeclineRequest(cred, repo, opts.id)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Declined pull request [%d].\n", pullRequestNumber)
+	fmt.Printf("Declined pull request [%d].\n", opts.id)
 	return nil
 }

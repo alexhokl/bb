@@ -1,14 +1,15 @@
 package command
 
 import (
+	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/alexhokl/go-bb-pr/git"
 	"github.com/spf13/cobra"
 )
 
 type mergeOptions struct {
+	idOption
 	isKeepBranch bool
 }
 
@@ -17,38 +18,43 @@ func NewMergeCommand(cli *ManagerCli) *cobra.Command {
 	opts := mergeOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "merge [PR ID]",
-		Short: "Merge a pull request",
+		Use:   "merge",
+		Short: "Merge the specified pull request",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runMerge(cli, args, opts)
+			if len(args) != 0 {
+				cli.ShowHelp(cmd, args)
+				return nil
+			}
+			return runMerge(cli, opts)
 		},
 	}
 
 	flags := cmd.Flags()
+	flags.IntVarP(&opts.id, "id", "i", 0, "Pull request ID")
 	flags.BoolVarP(&opts.isKeepBranch, "keep-branch", "k", false, "Keep local branch after merging")
 
 	return cmd
 }
 
-func runMerge(cli *ManagerCli, args []string, opts mergeOptions) error {
+func runMerge(cli *ManagerCli, opts mergeOptions) error {
+	if opts.id <= 0 {
+		return errors.New("Invalid pull request ID")
+	}
+
 	client := cli.Client()
 	cred := cli.UserCredential()
 	repo := cli.Repo()
-	pullRequestNumber, errParse := strconv.Atoi(args[0])
-	if errParse != nil {
-		return errParse
-	}
 
-	pr, errGet := client.GetRequest(cred, repo, pullRequestNumber)
+	pr, errGet := client.GetRequest(cred, repo, opts.id)
 	if errGet != nil {
 		return errGet
 	}
 
-	err := client.MergeRequest(cred, repo, pullRequestNumber)
+	err := client.MergeRequest(cred, repo, opts.id)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Merged pull request [%d].\n", pullRequestNumber)
+	fmt.Printf("Merged pull request [%d].\n", opts.id)
 
 	if opts.isKeepBranch {
 		return nil

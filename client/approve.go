@@ -7,7 +7,7 @@ import (
 	"github.com/alexhokl/go-bb-pr/models"
 )
 
-// ApproveRequest makes an API call to approve a pull request
+// ApproveRequest makes an API call to approve the specified pull request
 func (client *Client) ApproveRequest(cred *models.UserCredential, repo *models.Repository, id int) error {
 	path := fmt.Sprintf("%s/%d/approve", getBasePath(repo), id)
 	req := newRequest(cred, "POST", path)

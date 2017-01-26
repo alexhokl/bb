@@ -70,14 +70,21 @@ func runMerge(cli *ManagerCli, opts mergeOptions) error {
 		if errCheckout != nil {
 			return errCheckout
 		}
-		fmt.Printf("Checked out to branch %s.", pr.Destination.Branch.Name)
+		fmt.Printf("Checked out to branch %s.\n", pr.Destination.Branch.Name)
 	}
 
-	_, errDelete := git.DeleteBranch(pr.Source.Branch.Name)
-	if errDelete != nil {
-		return errDelete
+	isBranchExists, errBranchCheck := git.IsBranchExists(pr.Source.Branch.Name)
+	if errBranchCheck != nil {
+		return errCurrentBranch
 	}
-	fmt.Printf("Deleted branch %s.", pr.Source.Branch.Name)
+
+	if isBranchExists {
+		_, errDelete := git.DeleteBranch(pr.Source.Branch.Name)
+		if errDelete != nil {
+			return errDelete
+		}
+		fmt.Printf("Deleted branch %s.\n", pr.Source.Branch.Name)
+	}
 
 	return nil
 }

@@ -79,6 +79,19 @@ func GetBranchCommitComments(sourceBranchName string, destinationBranchName stri
 	return execute(args)
 }
 
+// IsBranchExists executes git show-branch to check if a branch exists
+func IsBranchExists(branchName string) (bool, error) {
+	args := []string{"show-branch", branchName}
+	_, err := execute(args)
+	if err != nil {
+		if strings.Contains(err.Error(), "128") {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
 func execute(args []string) (string, error) {
 	byteOutput, err := exec.Command("git", args...).Output()
 	return string(byteOutput), err

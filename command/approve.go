@@ -73,11 +73,18 @@ func runApprove(cli *ManagerCli, opts approveOptions) error {
 		fmt.Printf("Checked out to branch %s.\n", pr.Destination.Branch.Name)
 	}
 
-	_, errDelete := git.DeleteBranch(pr.Source.Branch.Name)
-	if errDelete != nil {
-		return errDelete
+	isBranchExists, errBranchCheck := git.IsBranchExists(pr.Source.Branch.Name)
+	if errBranchCheck != nil {
+		return errCurrentBranch
 	}
-	fmt.Printf("Deleted branch %s.", pr.Source.Branch.Name)
+
+	if isBranchExists {
+		_, errDelete := git.DeleteBranch(pr.Source.Branch.Name)
+		if errDelete != nil {
+			return errDelete
+		}
+		fmt.Printf("Deleted branch %s.\n", pr.Source.Branch.Name)
+	}
 
 	return nil
 }

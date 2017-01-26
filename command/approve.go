@@ -70,7 +70,7 @@ func runApprove(cli *ManagerCli, opts approveOptions) error {
 		if errCheckout != nil {
 			return errCheckout
 		}
-		fmt.Printf("Checked out to branch %s.", pr.Destination.Branch.Name)
+		fmt.Printf("Checked out to branch %s.\n", pr.Destination.Branch.Name)
 	}
 
 	_, errDelete := git.DeleteBranch(pr.Source.Branch.Name)

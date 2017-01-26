@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/alexhokl/go-bb-pr/models"
@@ -76,11 +77,17 @@ func newPostRequest(cred *models.UserCredential, path string, data interface{}) 
 func newPostURLDataRequest(cred *models.UserCredential, path string, data map[string]string) (*http.Request, error) {
 	urlData := url.Values{}
 	for key, value := range data {
-		urlData.Add(key, value)
+		if len(urlData) == 0 {
+			urlData.Set(key, value)
+		} else {
+			urlData.Add(key, value)
+		}
 	}
-	req, err := http.NewRequest("POST", path, strings.NewReader(urlData.Encode()))
+	encodedData := urlData.Encode()
+	req, err := http.NewRequest("POST", path, strings.NewReader(encodedData))
 	req.SetBasicAuth(cred.Username, cred.Password)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Content-Length", strconv.Itoa(len(encodedData)))
 	return req, err
 }
 

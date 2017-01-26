@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
@@ -45,6 +46,13 @@ func getBasePath(repo *models.Repository) string {
 		repo.Name)
 }
 
+func getVersion1BasePath(repo *models.Repository) string {
+	return fmt.Sprintf(
+		"https://api.bitbucket.org/1.0/repositories/%s/%s/pullrequests",
+		repo.Org,
+		repo.Name)
+}
+
 func newRequest(cred *models.UserCredential, verb string, path string) *http.Request {
 	req, _ := http.NewRequest(verb, path, nil)
 	req.SetBasicAuth(cred.Username, cred.Password)
@@ -62,6 +70,17 @@ func newPostRequest(cred *models.UserCredential, path string, data interface{}) 
 	req, _ := http.NewRequest("POST", path, bytes.NewBufferString(replacedStr))
 	req.SetBasicAuth(cred.Username, cred.Password)
 	req.Header.Set("Content-Type", "application/json")
+	return req, err
+}
+
+func newPostURLDataRequest(cred *models.UserCredential, path string, data map[string]string) (*http.Request, error) {
+	urlData := url.Values{}
+	for key, value := range data {
+		urlData.Add(key, value)
+	}
+	req, err := http.NewRequest("POST", path, strings.NewReader(urlData.Encode()))
+	req.SetBasicAuth(cred.Username, cred.Password)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
 	return req, err
 }
 

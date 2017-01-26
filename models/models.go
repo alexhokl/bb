@@ -143,7 +143,7 @@ func (pr PullRequestDetail) ToShortDescription(isIncludeCreatedOn bool) string {
 	approveStr := ""
 	for _, reviewer := range pr.Participants {
 		if reviewer.Approved {
-			approveStr = fmt.Sprintf("%s\n\tApproved by %s", approveStr, reviewer.User)
+			approveStr = fmt.Sprintf("%s\n\tApproved by %s", approveStr, reviewer.User.DisplayName)
 		}
 	}
 

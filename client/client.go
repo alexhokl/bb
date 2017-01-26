@@ -24,6 +24,7 @@ type APIClient interface {
 	MergeRequest(cred *models.UserCredential, repo *models.Repository, id int) error
 	ActivityRequest(cred *models.UserCredential, repo *models.Repository, id int) ([]models.PullRequestActivity, error)
 	CreateRequest(cred *models.UserCredential, repo *models.Repository, req *models.PullRequestCreateRequest) (*models.PullRequestDetail, error)
+	AddComment(cred *models.UserCredential, repo *models.Repository, id int, comment string) error
 }
 
 // Client struct

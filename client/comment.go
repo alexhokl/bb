@@ -12,7 +12,7 @@ func (client *Client) AddComment(cred *models.UserCredential, repo *models.Repos
 	path := fmt.Sprintf("%s/%d/comments", getVersion1BasePath(repo), id)
 
 	data := map[string]string{
-		"comment": comment,
+		"content": comment,
 	}
 	req, errReq := newPostURLDataRequest(cred, path, data)
 	if errReq != nil {

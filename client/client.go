@@ -87,7 +87,7 @@ func newPostURLDataRequest(cred *models.UserCredential, path string, data map[st
 	encodedData := urlData.Encode()
 	req, err := http.NewRequest("POST", path, strings.NewReader(encodedData))
 	req.SetBasicAuth(cred.Username, cred.Password)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Content-Length", strconv.Itoa(len(encodedData)))
 	return req, err
 }

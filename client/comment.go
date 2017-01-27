@@ -23,7 +23,7 @@ func (client *Client) AddComment(cred *models.UserCredential, repo *models.Repos
 		return err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 201 {
+	if resp.StatusCode != 200 {
 		msg := getErrorResponseMessage(resp)
 		return errors.New(msg)
 	}

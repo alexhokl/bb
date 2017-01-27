@@ -44,7 +44,11 @@ func (client *Client) ActivityRequest(cred *models.UserCredential, repo *models.
 		}
 		path = listResponse.Next
 	}
-	return list, nil
+
+	// getting around a bug of the API
+	updatedList := list[:len(list)-1]
+
+	return updatedList, nil
 }
 
 func parseActivities(resp *http.Response) (*pullRequestActivityListResponse, error) {

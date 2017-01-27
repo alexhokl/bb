@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/alexhokl/go-bb-pr/models"
@@ -22,6 +24,7 @@ type APIClient interface {
 	MergeRequest(cred *models.UserCredential, repo *models.Repository, id int) error
 	ActivityRequest(cred *models.UserCredential, repo *models.Repository, id int) ([]models.PullRequestActivity, error)
 	CreateRequest(cred *models.UserCredential, repo *models.Repository, req *models.PullRequestCreateRequest) (*models.PullRequestDetail, error)
+	AddComment(cred *models.UserCredential, repo *models.Repository, id int, comment string) error
 }
 
 // Client struct
@@ -45,6 +48,13 @@ func getBasePath(repo *models.Repository) string {
 		repo.Name)
 }
 
+func getVersion1BasePath(repo *models.Repository) string {
+	return fmt.Sprintf(
+		"https://api.bitbucket.org/1.0/repositories/%s/%s/pullrequests",
+		repo.Org,
+		repo.Name)
+}
+
 func newRequest(cred *models.UserCredential, verb string, path string) *http.Request {
 	req, _ := http.NewRequest(verb, path, nil)
 	req.SetBasicAuth(cred.Username, cred.Password)
@@ -62,6 +72,23 @@ func newPostRequest(cred *models.UserCredential, path string, data interface{}) 
 	req, _ := http.NewRequest("POST", path, bytes.NewBufferString(replacedStr))
 	req.SetBasicAuth(cred.Username, cred.Password)
 	req.Header.Set("Content-Type", "application/json")
+	return req, err
+}
+
+func newPostURLDataRequest(cred *models.UserCredential, path string, data map[string]string) (*http.Request, error) {
+	urlData := url.Values{}
+	for key, value := range data {
+		if len(urlData) == 0 {
+			urlData.Set(key, value)
+		} else {
+			urlData.Add(key, value)
+		}
+	}
+	encodedData := urlData.Encode()
+	req, err := http.NewRequest("POST", path, strings.NewReader(encodedData))
+	req.SetBasicAuth(cred.Username, cred.Password)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Content-Length", strconv.Itoa(len(encodedData)))
 	return req, err
 }
 

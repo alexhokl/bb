@@ -4,15 +4,20 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/alexhokl/go-bb-pr/command"
 	"github.com/alexhokl/go-bb-pr/git"
 	"github.com/alexhokl/go-bb-pr/models"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func main() {
+	viper.SetEnvPrefix("bb_pr")
+	viper.AutomaticEnv()
+
 	cred, errCred := getCredentials()
 	if errCred != nil {
 		fmt.Println(errCred)
@@ -44,7 +49,7 @@ func main() {
 
 func newManagerCommand(cli *command.ManagerCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "pr",
+		Use:          "go-bb-pr",
 		Short:        "BitBucket Pull Request Manager",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -56,14 +61,14 @@ func newManagerCommand(cli *command.ManagerCli) *cobra.Command {
 }
 
 func getCredentials() (*models.UserCredential, error) {
-	username := os.Getenv("bbuser")
-	password := os.Getenv("bbpassword")
+	username := viper.GetString("username")
+	password := viper.GetString("password")
 
 	if username == "" {
-		return nil, errors.New("bbuser is not set")
+		return nil, errors.New("User is not configured")
 	}
 	if password == "" {
-		return nil, errors.New("bbpassword is not set")
+		return nil, errors.New("Password is not configured")
 	}
 
 	cred := models.UserCredential{Username: username, Password: password}
@@ -81,21 +86,33 @@ func getRepository() (*models.Repository, error) {
 	}
 
 	remote := string(cmdOut)
-
 	if !strings.Contains(remote, "bitbucket.org") {
-		return nil, errors.New("Only BitBucket remote is supported")
+		return nil, errors.New("Error: Only repository of BitBucket is supported")
 	}
 
-	remote = strings.Replace(remote, "https://bitbucket.org/", "", -1)
-	remote = strings.Replace(remote, ".git", "", -1)
-	remote = strings.Replace(remote, "\n", "", -1)
+	regex := regexp.MustCompile(`bitbucket\.org/(?P<org>\w+)\/(?P<name>\w+)`)
+	matches := findMatches(regex, remote)
 
-	parts := strings.Split(remote, "/")
+	if matches["org"] == "" || matches["name"] == "" {
+		return nil, fmt.Errorf("Error: Unable to retrieve repository name")
+	}
 
 	r := models.Repository{
-		Org:  parts[0],
-		Name: parts[1],
+		Org:  matches["org"],
+		Name: matches["name"],
 	}
 
 	return &r, nil
+}
+
+func findMatches(regex *regexp.Regexp, input string) map[string]string {
+	match := regex.FindStringSubmatch(input)
+	subMatchMap := make(map[string]string)
+	for i, name := range regex.SubexpNames() {
+		if i != 0 {
+			subMatchMap[name] = match[i]
+		}
+	}
+
+	return subMatchMap
 }

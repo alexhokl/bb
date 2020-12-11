@@ -60,15 +60,15 @@ func Merge(branchName string) (string, error) {
 }
 
 // Difftool executes git difftool command
-func Difftool(branchName string) error {
-	args := []string{"difftool", branchName}
+func Difftool(destinationBranchName, sourceBranchName string) error {
+	args := []string{"difftool", fmt.Sprintf("origin/%s...origin/%s", destinationBranchName, sourceBranchName)}
 	_, err := execute(args)
 	return err
 }
 
 // DiffStat executes git diff to retrieve diff stat
-func DiffStat(branchName string) (string, error) {
-	args := []string{"diff", "--stat", branchName}
+func DiffStat(destinationBranchName, sourceBranchName string) (string, error) {
+	args := []string{"diff", "--stat", fmt.Sprintf("origin/%s...origin/%s", destinationBranchName, sourceBranchName)}
 	return execute(args)
 }
 

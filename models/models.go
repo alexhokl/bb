@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -136,80 +135,4 @@ func (pr PullRequestDetail) IsApproved(username string) bool {
 		}
 	}
 	return false
-}
-
-// ToShortDescription retursn a short description of the specified pull request
-func (pr PullRequestDetail) ToShortDescription(isIncludeCreatedOn bool) string {
-	approveStr := ""
-	for _, reviewer := range pr.Participants {
-		if reviewer.Approved {
-			approveStr = fmt.Sprintf("%s\n\tApproved by %s", approveStr, reviewer.User.DisplayName)
-		}
-	}
-
-	if isIncludeCreatedOn {
-		return fmt.Sprintf("%d Updated:%s Created by:%s at %s\n\t%s -> %s\n\t%s\n%s\n\n",
-			pr.ID,
-			formatLocalTime(pr.UpdatedOn),
-			pr.Author.DisplayName,
-			formatLocalTime(pr.CreatedOn),
-			pr.Source.Branch.Name,
-			pr.Destination.Branch.Name,
-			pr.Title,
-			approveStr)
-	}
-	return fmt.Sprintf("%d Updated:%s Created by:%s\n\t%s -> %s\n\t%s\n%s\n\n",
-		pr.ID,
-		formatLocalTime(pr.UpdatedOn),
-		pr.Author.DisplayName,
-		pr.Source.Branch.Name,
-		pr.Destination.Branch.Name,
-		pr.Title,
-		approveStr)
-}
-
-// ToOneLiner retursn a short description of the specified pull request
-func (pr PullRequestDetail) ToOneLiner() string {
-	return fmt.Sprintf("%d Updated:%s %s %s\n",
-		pr.ID,
-		formatLocalTime(pr.UpdatedOn),
-		pr.Author.DisplayName,
-		pr.Title)
-}
-
-// ToString returns the description of the specified pull request
-func (pr PullRequestDetail) ToString() string {
-	return fmt.Sprintf("%d Updated:%s Created by:%s at %s\n\t%s -> %s\n\t%s\n%s\n",
-		pr.ID,
-		formatLocalTime(pr.UpdatedOn),
-		pr.Author.DisplayName,
-		formatLocalTime(pr.CreatedOn),
-		pr.Source.Branch.Name,
-		pr.Destination.Branch.Name,
-		pr.Title,
-		pr.Description)
-}
-
-// ToString returns the description of a comment
-func (c Comment) ToString() string {
-	return fmt.Sprintf(
-		"Comment by %s (%s): %s",
-		c.User.DisplayName,
-		formatLocalTime(c.UpdatedOn),
-		c.Content.Raw)
-}
-
-// ToString returns the description of an update
-func (c Update) ToString() string {
-	return fmt.Sprintf(
-		"Commit made by %s (%s): %s",
-		c.Author.DisplayName,
-		formatLocalTime(c.Date),
-		c.Source.Commit.Hash)
-}
-
-func formatLocalTime(t time.Time) string {
-	loc, _ := time.LoadLocation("Local")
-	lt := t.In(loc)
-	return lt.Format("2006-01-02 15:04")
 }

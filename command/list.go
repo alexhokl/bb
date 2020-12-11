@@ -8,7 +8,7 @@ import (
 
 type listOptions struct {
 	isQuiet                     bool
-	isOneLiner                  bool
+	isInDetail                  bool
 	isIncldeCreationTime        bool
 	isHideAuthoredByCurrentUser bool
 }
@@ -31,7 +31,7 @@ func NewListCommand(cli *ManagerCli) *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.BoolVarP(&opts.isQuiet, "quiet", "q", false, "List IDs only")
-	flags.BoolVar(&opts.isOneLiner, "oneline", false, "List in oneliners")
+	flags.BoolVar(&opts.isInDetail, "detail", false, "List in detail")
 	flags.BoolVar(
 		&opts.isIncldeCreationTime, "created-time", false, "Include created time")
 	flags.BoolVarP(
@@ -63,13 +63,12 @@ func runList(cli *ManagerCli, opts listOptions) error {
 			}
 		}
 		prInfo, _ := client.GetRequest(cred, repo, pr.ID)
-		printFunc := getPrint(prInfo, cred)
 		if opts.isQuiet {
-			printFunc("%d", prInfo.ID)
-		} else if opts.isOneLiner {
-			printFunc(prInfo.ToOneLiner())
+			prInfo.PrintID()
+		} else if opts.isInDetail {
+			prInfo.PrintShortDescription(opts.isIncldeCreationTime)
 		} else {
-			printFunc(prInfo.ToShortDescription(opts.isIncldeCreationTime))
+			prInfo.PrintOneLiner()
 		}
 	}
 	return nil

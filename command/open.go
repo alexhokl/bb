@@ -51,6 +51,9 @@ func runOpen(cli *ManagerCli, opts idOption) error {
 		cmdName = "cmd"
 		cmdArgs = []string{"/C", "start", pr.Links.Html.Href}
 	}
+	if runtime.GOOS == "linux" {
+		cmdName = "xdg-open"
+	}
 	_, errOpen := exec.Command(cmdName, cmdArgs...).Output()
 	if errOpen != nil {
 		return errOpen

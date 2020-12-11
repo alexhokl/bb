@@ -91,7 +91,9 @@ func runCreate(cli *ManagerCli, opts createOptions) error {
 	if errCreate != nil {
 		return errCreate
 	}
-	fmt.Printf("Pull request created.\n%s", pr.ToString())
+	fmt.Println("Pull request created.")
+	pr.PrintShortDescription(true)
+	pr.PrintDescription()
 
 	return nil
 }

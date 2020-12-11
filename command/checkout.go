@@ -108,7 +108,7 @@ func runCheckout(cli *ManagerCli, opts checkoutOptions) error {
 	}
 
 	if opts.isShowStat {
-		stat, errStat := git.DiffStat(pr.Destination.Branch.Name)
+		stat, errStat := git.DiffStat(pr.Destination.Branch.Name, "")
 		if errStat != nil {
 			return errStat
 		}
@@ -116,7 +116,7 @@ func runCheckout(cli *ManagerCli, opts checkoutOptions) error {
 	}
 
 	if opts.isShowDifftool {
-		errDifftool := git.Difftool(pr.Destination.Branch.Name)
+		errDifftool := git.Difftool(pr.Destination.Branch.Name, "")
 		if errDifftool != nil {
 			return errDifftool
 		}

@@ -114,6 +114,11 @@ type PullRequestCreateRequest struct {
 	Reviewers   []Reviewer   `json:"reviewers"`
 }
 
+// CommentRequest contains fields for making a create comment request
+type CommentRequest struct {
+	Content CommentContent `json:"content"`
+}
+
 // Repository struct
 type Repository struct {
 	Org  string

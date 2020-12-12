@@ -9,12 +9,15 @@ import (
 
 // AddComment makes an API call to add a comment to the specified pull request
 func (client *Client) AddComment(cred *models.UserCredential, repo *models.Repository, id int, comment string) error {
-	path := fmt.Sprintf("%s/%d/comments", getVersion1BasePath(repo), id)
+	path := fmt.Sprintf("%s/%d/comments", getBasePath(repo), id)
 
-	data := map[string]string{
-		"content": comment,
+	data := &models.CommentRequest{
+		Content: models.CommentContent{
+			Raw: comment,
+		},
 	}
-	req, errReq := newPostURLDataRequest(cred, path, data)
+
+	req, errReq := newPostRequest(cred, path, data)
 	if errReq != nil {
 		return errReq
 	}
@@ -23,7 +26,7 @@ func (client *Client) AddComment(cred *models.UserCredential, repo *models.Repos
 		return err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != 201 {
 		msg := getErrorResponseMessage(resp)
 		return errors.New(msg)
 	}

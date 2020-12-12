@@ -90,7 +90,7 @@ func getRepository() (*models.Repository, error) {
 		return nil, errors.New("Error: Only repository of BitBucket is supported")
 	}
 
-	regex := regexp.MustCompile(`bitbucket\.org/(?P<org>\w+)\/(?P<name>\w+)`)
+	regex := regexp.MustCompile(`bitbucket\.org/(?P<org>\w+)\/(?P<name>.*)`)
 	matches := findMatches(regex, remote)
 
 	if matches["org"] == "" || matches["name"] == "" {

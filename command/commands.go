@@ -16,5 +16,6 @@ func AddCommands(cmd *cobra.Command, cli *ManagerCli) {
 		NewCreateCommand(cli),
 		NewCommentCommand(cli),
 		NewLoginCommand(cli),
+		NewListJiraIDsCommand(cli),
 	)
 }

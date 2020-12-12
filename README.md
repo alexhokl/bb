@@ -9,16 +9,17 @@ Available Commands:
 
 Command | Description
 --- | ---
-login      | Log onto BitBucket (and retrieve and store access tokens)
-approve    | Approve the specified pull request
-create     | Create the specified pull request
-checkout   | Checkout the latest code of the branch of the specified pull request
-decline    | Decline the specified pull request
-describe   | Describe the specified pull request
-list       | List pull requests
-merge      | Merge the specified pull request
-open       | Open the web page of the specified pull request in a browser
-unapprove  | Un-approve the specified pull request
+login         | Log onto BitBucket (and retrieve and store access tokens)
+approve       | Approve the specified pull request
+create        | Create the specified pull request
+checkout      | Checkout the latest code of the branch of the specified pull request
+decline       | Decline the specified pull request
+describe      | Describe the specified pull request
+list          | List pull requests
+merge         | Merge the specified pull request
+open          | Open the web page of the specified pull request in a browser
+unapprove     | Un-approve the specified pull request
+list-jira-ids | list all JIRA IDs involved in a pull request
 
 Use "go-bb-pr [command] --help" for more information about a command.
 

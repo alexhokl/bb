@@ -71,7 +71,8 @@ type Commit struct {
 
 // CommitInfo struct
 type CommitInfo struct {
-	Hash string `json:"hash"`
+	Hash    string     `json:"hash"`
+	Summary RawContent `json:"summary"`
 }
 
 // Branch struct
@@ -94,14 +95,14 @@ type Update struct {
 
 // Comment struct
 type Comment struct {
-	Content   CommentContent `json:"content"`
-	CreatedOn time.Time      `json:"created_on"`
-	UpdatedOn time.Time      `json:"updated_on"`
-	User      User           `json:"user"`
+	Content   RawContent `json:"content"`
+	CreatedOn time.Time  `json:"created_on"`
+	UpdatedOn time.Time  `json:"updated_on"`
+	User      User       `json:"user"`
 }
 
-// CommentContent struct
-type CommentContent struct {
+// RawContent struct
+type RawContent struct {
 	Raw string `json:"raw"`
 }
 
@@ -116,7 +117,7 @@ type PullRequestCreateRequest struct {
 
 // CommentRequest contains fields for making a create comment request
 type CommentRequest struct {
-	Content CommentContent `json:"content"`
+	Content RawContent `json:"content"`
 }
 
 // Repository struct

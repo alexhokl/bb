@@ -12,7 +12,7 @@ func (client *Client) AddComment(cred *models.UserCredential, repo *models.Repos
 	path := fmt.Sprintf("%s/%d/comments", getBasePath(repo), id)
 
 	data := &models.CommentRequest{
-		Content: models.CommentContent{
+		Content: models.RawContent{
 			Raw: comment,
 		},
 	}

@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/alexhokl/go-bb-pr/models"
@@ -25,6 +23,7 @@ type APIClient interface {
 	ActivityRequest(cred *models.UserCredential, repo *models.Repository, id int) ([]models.PullRequestActivity, error)
 	CreateRequest(cred *models.UserCredential, repo *models.Repository, req *models.PullRequestCreateRequest) (*models.PullRequestDetail, error)
 	AddComment(cred *models.UserCredential, repo *models.Repository, id int, comment string) error
+	ListCommits(cred *models.UserCredential, repo *models.Repository, pullRequestID int) ([]models.CommitInfo, error)
 }
 
 // Client struct
@@ -48,13 +47,6 @@ func getBasePath(repo *models.Repository) string {
 		repo.Name)
 }
 
-func getVersion1BasePath(repo *models.Repository) string {
-	return fmt.Sprintf(
-		"https://api.bitbucket.org/1.0/repositories/%s/%s/pullrequests",
-		repo.Org,
-		repo.Name)
-}
-
 func newRequest(cred *models.UserCredential, verb string, path string) *http.Request {
 	req, _ := http.NewRequest(verb, path, nil)
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", cred.AccessToken))
@@ -72,23 +64,6 @@ func newPostRequest(cred *models.UserCredential, path string, data interface{}) 
 	req, _ := http.NewRequest("POST", path, bytes.NewBufferString(replacedStr))
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", cred.AccessToken))
 	req.Header.Set("Content-Type", "application/json")
-	return req, err
-}
-
-func newPostURLDataRequest(cred *models.UserCredential, path string, data map[string]string) (*http.Request, error) {
-	urlData := url.Values{}
-	for key, value := range data {
-		if len(urlData) == 0 {
-			urlData.Set(key, value)
-		} else {
-			urlData.Add(key, value)
-		}
-	}
-	encodedData := urlData.Encode()
-	req, err := http.NewRequest("POST", path, strings.NewReader(encodedData))
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", cred.AccessToken))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Content-Length", strconv.Itoa(len(encodedData)))
 	return req, err
 }
 
@@ -121,15 +96,6 @@ func getErrorResponseMessage(resp *http.Response) string {
 
 func parse(resp *http.Response) (*models.PullRequestDetail, error) {
 	var jsonObj models.PullRequestDetail
-	err := json.NewDecoder(resp.Body).Decode(&jsonObj)
-	if err != nil {
-		return nil, err
-	}
-	return &jsonObj, nil
-}
-
-func parseList(resp *http.Response) (*pullRequestListResponse, error) {
-	var jsonObj pullRequestListResponse
 	err := json.NewDecoder(resp.Body).Decode(&jsonObj)
 	if err != nil {
 		return nil, err

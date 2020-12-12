@@ -3,20 +3,21 @@ package client
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/alexhokl/go-bb-pr/models"
 )
 
-type pullRequestListResponse struct {
-	Items []models.PullRequestInfo `json:"values"`
-	Next  string                   `json:"next"`
+type commitListResponse struct {
+	Items []models.CommitInfo `json:"values"`
+	Next  string              `json:"next"`
 }
 
-// ListRequests makes an API call to retrieve a list of pull requests
-func (client *Client) ListRequests(cred *models.UserCredential, repo *models.Repository) ([]models.PullRequestInfo, error) {
-	var list []models.PullRequestInfo
-	path := getBasePath(repo)
+// ListCommits makes an API call to retrieve a list of commits of a pull request
+func (client *Client) ListCommits(cred *models.UserCredential, repo *models.Repository, pullRequestID int) ([]models.CommitInfo, error) {
+	var list []models.CommitInfo
+	path := fmt.Sprintf("%s/%d/commits", getBasePath(repo), pullRequestID)
 
 	for path != "" {
 		req := newRequest(cred, "GET", path)
@@ -29,7 +30,7 @@ func (client *Client) ListRequests(cred *models.UserCredential, repo *models.Rep
 			msg := getErrorResponseMessage(resp)
 			return nil, errors.New(msg)
 		}
-		listResponse, errParse := parseList(resp)
+		listResponse, errParse := parseCommitList(resp)
 		if errParse != nil {
 			return nil, errParse
 		}
@@ -46,8 +47,8 @@ func (client *Client) ListRequests(cred *models.UserCredential, repo *models.Rep
 	return list, nil
 }
 
-func parseList(resp *http.Response) (*pullRequestListResponse, error) {
-	var jsonObj pullRequestListResponse
+func parseCommitList(resp *http.Response) (*commitListResponse, error) {
+	var jsonObj commitListResponse
 	err := json.NewDecoder(resp.Body).Decode(&jsonObj)
 	if err != nil {
 		return nil, err

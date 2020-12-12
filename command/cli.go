@@ -3,7 +3,6 @@ package command
 import (
 	"github.com/alexhokl/go-bb-pr/client"
 	"github.com/alexhokl/go-bb-pr/models"
-	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -20,8 +19,6 @@ type ManagerCli struct {
 	credential *models.UserCredential
 	repo       *models.Repository
 }
-
-type print func(msg string, args ...interface{})
 
 type idOption struct {
 	id int
@@ -56,14 +53,4 @@ func (cli *ManagerCli) Repo() *models.Repository {
 func (cli *ManagerCli) ShowHelp(cmd *cobra.Command, args []string) error {
 	cmd.HelpFunc()(cmd, args)
 	return nil
-}
-
-func getPrint(pr *models.PullRequestDetail, cred *models.UserCredential) print {
-	if pr.IsApproved(cred.Username) {
-		return color.Cyan
-	}
-	if pr.Author.Username == cred.Username {
-		return color.Blue
-	}
-	return color.Red
 }

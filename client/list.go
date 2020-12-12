@@ -18,7 +18,7 @@ func (client *Client) ListRequests(cred *models.UserCredential, repo *models.Rep
 
 	for path != "" {
 		req := newRequest(cred, "GET", path)
-		resp, err := client.client.Do(req)
+		resp, err := client.do(req)
 		if err != nil {
 			return nil, err
 		}

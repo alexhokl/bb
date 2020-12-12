@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
-	"runtime"
 
 	"github.com/spf13/cobra"
 )
@@ -45,15 +44,7 @@ func runOpen(cli *ManagerCli, opts idOption) error {
 		return err
 	}
 
-	cmdName := "open"
-	cmdArgs := []string{pr.Links.Html.Href}
-	if runtime.GOOS == "windows" {
-		cmdName = "cmd"
-		cmdArgs = []string{"/C", "start", pr.Links.Html.Href}
-	}
-	if runtime.GOOS == "linux" {
-		cmdName = "xdg-open"
-	}
+	cmdName, cmdArgs := getOpenCommand(pr.Links.Html.Href)
 	_, errOpen := exec.Command(cmdName, cmdArgs...).Output()
 	if errOpen != nil {
 		return errOpen

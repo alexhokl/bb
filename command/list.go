@@ -7,10 +7,9 @@ import (
 )
 
 type listOptions struct {
-	isQuiet                     bool
-	isInDetail                  bool
-	isIncldeCreationTime        bool
-	isHideAuthoredByCurrentUser bool
+	isQuiet              bool
+	isInDetail           bool
+	isIncldeCreationTime bool
 }
 
 // NewListCommand returns definition of command list
@@ -34,9 +33,6 @@ func NewListCommand(cli *ManagerCli) *cobra.Command {
 	flags.BoolVar(&opts.isInDetail, "detail", false, "List in detail")
 	flags.BoolVar(
 		&opts.isIncldeCreationTime, "created-time", false, "Include created time")
-	flags.BoolVarP(
-		&opts.isHideAuthoredByCurrentUser,
-		"hide-current", "c", false, "Hide pull requests created by current user")
 
 	return cmd
 }
@@ -57,11 +53,6 @@ func runList(cli *ManagerCli, opts listOptions) error {
 	}
 
 	for _, pr := range prList {
-		if opts.isHideAuthoredByCurrentUser {
-			if pr.Author.Username == cred.Username {
-				continue
-			}
-		}
 		prInfo, _ := client.GetRequest(cred, repo, pr.ID)
 		if opts.isQuiet {
 			prInfo.PrintID()

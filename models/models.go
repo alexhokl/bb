@@ -122,8 +122,8 @@ type Repository struct {
 
 // UserCredential struct
 type UserCredential struct {
-	Username string
-	Password string
+	AccessToken  string
+	RefreshToken string
 }
 
 // IsApproved checks the pull request has been approved by

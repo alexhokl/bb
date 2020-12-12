@@ -57,7 +57,7 @@ func getVersion1BasePath(repo *models.Repository) string {
 
 func newRequest(cred *models.UserCredential, verb string, path string) *http.Request {
 	req, _ := http.NewRequest(verb, path, nil)
-	req.SetBasicAuth(cred.Username, cred.Password)
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", cred.AccessToken))
 	return req
 }
 
@@ -70,7 +70,7 @@ func newPostRequest(cred *models.UserCredential, path string, data interface{}) 
 	jsonStr := string(buf.Bytes())
 	replacedStr := strings.Replace(jsonStr, "'", "", -1)
 	req, _ := http.NewRequest("POST", path, bytes.NewBufferString(replacedStr))
-	req.SetBasicAuth(cred.Username, cred.Password)
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", cred.AccessToken))
 	req.Header.Set("Content-Type", "application/json")
 	return req, err
 }
@@ -86,10 +86,24 @@ func newPostURLDataRequest(cred *models.UserCredential, path string, data map[st
 	}
 	encodedData := urlData.Encode()
 	req, err := http.NewRequest("POST", path, strings.NewReader(encodedData))
-	req.SetBasicAuth(cred.Username, cred.Password)
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", cred.AccessToken))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Content-Length", strconv.Itoa(len(encodedData)))
 	return req, err
+}
+
+func (client *Client) do(req *http.Request) (*http.Response, error) {
+	res, err := client.client.Do(req)
+	if err != nil {
+		return res, err
+	}
+	if res.StatusCode == http.StatusUnauthorized {
+		return res, fmt.Errorf("Please run command login before continue on")
+	}
+	if res.StatusCode == http.StatusForbidden {
+		return res, fmt.Errorf("You are not authorized to perform this action")
+	}
+	return res, err
 }
 
 func dumpResponse(resp *http.Response) error {

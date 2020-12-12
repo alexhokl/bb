@@ -11,7 +11,7 @@ import (
 func (client *Client) ApproveRequest(cred *models.UserCredential, repo *models.Repository, id int) error {
 	path := fmt.Sprintf("%s/%d/approve", getBasePath(repo), id)
 	req := newRequest(cred, "POST", path)
-	resp, err := client.client.Do(req)
+	resp, err := client.do(req)
 	if err != nil {
 		return err
 	}

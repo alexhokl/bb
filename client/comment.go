@@ -18,7 +18,7 @@ func (client *Client) AddComment(cred *models.UserCredential, repo *models.Repos
 	if errReq != nil {
 		return errReq
 	}
-	resp, err := client.client.Do(req)
+	resp, err := client.do(req)
 	if err != nil {
 		return err
 	}

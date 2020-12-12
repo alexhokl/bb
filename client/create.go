@@ -14,7 +14,7 @@ func (client *Client) CreateRequest(cred *models.UserCredential, repo *models.Re
 	if errReq != nil {
 		return nil, errReq
 	}
-	resp, err := client.client.Do(req)
+	resp, err := client.do(req)
 	if err != nil {
 		return nil, err
 	}

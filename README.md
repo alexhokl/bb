@@ -9,6 +9,7 @@ Available Commands:
 
 Command | Description
 --- | ---
+login      | Log onto BitBucket (and retrieve and store access tokens)
 approve    | Approve the specified pull request
 create     | Create the specified pull request
 checkout   | Checkout the latest code of the branch of the specified pull request
@@ -29,10 +30,8 @@ github.com/alexhokl/go-bb-pr`. If not, download the latest binary from
 a directory where it is in of the directories specified in `PATH` environment
 variable.
 
-Login to BitBucket is required and it should be set in environment variable
-`BB_PR_USERNAME` and `BB_PR_PASSWORD`. Currently, all the API requests are made
-in encrypted traffic but credentials stored in environment variables are not
-encrypted. This issue should be fixed when this tool has a production release.
+Login to BitBucket is required and OAuth client ID and secret should be set in
+environment variable `BB_PR_CLIENT_ID` and `BB_PR_CLIENT_SECRET` respectively.
 
 ### Build
 

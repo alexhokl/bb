@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
@@ -12,6 +14,7 @@ import (
 	"github.com/alexhokl/go-bb-pr/models"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/oauth2"
 )
 
 func main() {
@@ -61,19 +64,31 @@ func newManagerCommand(cli *command.ManagerCli) *cobra.Command {
 }
 
 func getCredentials() (*models.UserCredential, error) {
-	username := viper.GetString("username")
-	password := viper.GetString("password")
-
-	if username == "" {
-		return nil, errors.New("User is not configured")
+	tokenPath, errPath := command.GetTokenPath()
+	if errPath != nil {
+		return nil, errPath
 	}
-	if password == "" {
-		return nil, errors.New("Password is not configured")
+	if _, err := os.Stat(tokenPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("Please run command login before continue on")
 	}
 
-	cred := models.UserCredential{Username: username, Password: password}
+	file, errFile := ioutil.ReadFile(tokenPath)
+	if errFile != nil {
+		return nil, fmt.Errorf("Please run command login before continue on: %v", errFile)
+	}
 
-	return &cred, nil
+	token := oauth2.Token{}
+	err := json.Unmarshal(file, &token)
+	if err != nil {
+		return nil, fmt.Errorf("Please run command login before continue on: %v", err)
+	}
+
+	cred := &models.UserCredential{
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+	}
+
+	return cred, nil
 }
 
 func getRepository() (*models.Repository, error) {

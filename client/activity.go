@@ -22,7 +22,7 @@ func (client *Client) ActivityRequest(cred *models.UserCredential, repo *models.
 
 	for path != "" {
 		req := newRequest(cred, "GET", path)
-		resp, err := client.client.Do(req)
+		resp, err := client.do(req)
 		if err != nil {
 			return nil, err
 		}

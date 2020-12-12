@@ -47,17 +47,3 @@ func writeJSONFile(path string, obj interface{}) error {
 	err := encoder.Encode(obj)
 	return err
 }
-
-func getDistinctNames(names []string) []string {
-	m := map[string]bool{}
-
-	for v := range names {
-		m[names[v]] = true
-	}
-
-	d := []string{}
-	for k := range m {
-		d = append(d, k)
-	}
-	return d
-}

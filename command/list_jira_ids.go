@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/alexhokl/helper/collection"
 	"github.com/spf13/cobra"
 )
 
@@ -75,7 +76,7 @@ func runListJiraIDs(cli *ManagerCli, opts listJiraIDsOptions) error {
 			ids = append(ids, m)
 		}
 	}
-	distinctIDs := getDistinctNames(ids)
+	distinctIDs := collection.GetDistinct(ids)
 	sort.Strings(distinctIDs)
 
 	for index, i := range distinctIDs {

@@ -3,7 +3,7 @@ _go_bb_pr() {
   cur="${COMP_WORDS[COMP_CWORD]}"
   prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-  opts="approve create checkout decline describe list merge open unapprove login"
+  opts="approve create checkout decline describe list merge open unapprove login list-jira-ids"
 
   case "${prev}" in
         *)

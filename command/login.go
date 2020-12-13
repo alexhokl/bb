@@ -12,6 +12,7 @@ import (
 	"os/user"
 	"time"
 
+	jsonhelper "github.com/alexhokl/helper/json"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
@@ -122,7 +123,7 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tokenPath, _ := GetTokenPath()
-	errJSON := writeJSONFile(tokenPath, token)
+	errJSON := jsonhelper.WriteToJSONFile(tokenPath, token, true)
 	if errJSON != nil {
 		fmt.Printf("Unable to write token to [%s]: %v", tokenPath, errJSON)
 		os.Exit(1)

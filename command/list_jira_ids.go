@@ -29,6 +29,14 @@ func NewListJiraIDsCommand(cli *ManagerCli) *cobra.Command {
 				cli.ShowHelp(cmd, args)
 				return nil
 			}
+			errRepo := cli.SetRepository()
+			if errRepo != nil {
+				return errRepo
+			}
+			errCred := cli.SetCredentials()
+			if errCred != nil {
+				return errCred
+			}
 			return runListJiraIDs(cli, opts)
 		},
 	}
@@ -79,16 +87,13 @@ func runListJiraIDs(cli *ManagerCli, opts listJiraIDsOptions) error {
 	distinctIDs := collection.GetDistinct(ids)
 	sort.Strings(distinctIDs)
 
-	for index, i := range distinctIDs {
-		if opts.isCommaSeparated {
-			if index == 0 {
-				fmt.Printf("%s", i)
-			} else {
-				fmt.Printf(", %s", i)
-			}
-		} else {
-			fmt.Println(i)
-		}
+	if opts.isCommaSeparated {
+		fmt.Printf(collection.GetDelimitedString(distinctIDs, ", "))
+		return nil
+	}
+
+	for _, i := range distinctIDs {
+		fmt.Println(i)
 	}
 	return nil
 }

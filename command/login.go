@@ -13,6 +13,7 @@ import (
 	"time"
 
 	clihelper "github.com/alexhokl/helper/cli"
+	"github.com/alexhokl/helper/iohelper"
 	jsonhelper "github.com/alexhokl/helper/json"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -55,8 +56,8 @@ func NewLoginCommand(cli *ManagerCli) *cobra.Command {
 	return cmd
 }
 
-// GetTokenPath returns full path to token JSON file
-func GetTokenPath() (string, error) {
+// getTokenPath returns full path to token JSON file
+func getTokenPath() (string, error) {
 	directory, err := getTokenDirectory(tokenDirectory)
 	if err != nil {
 		return "", err
@@ -123,7 +124,7 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	tokenPath, _ := GetTokenPath()
+	tokenPath, _ := getTokenPath()
 	errJSON := jsonhelper.WriteToJSONFile(tokenPath, token, true)
 	if errJSON != nil {
 		fmt.Printf("Unable to write token to [%s]: %v", tokenPath, errJSON)
@@ -152,7 +153,7 @@ func getTokenDirectory(path string) (string, error) {
 }
 
 func ensureDirectory(path string) error {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+	if !iohelper.IsDirectoryExist(path) {
 		errMkdir := os.Mkdir(path, 0755)
 		if errMkdir != nil {
 			return errMkdir

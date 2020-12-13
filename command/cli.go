@@ -1,9 +1,20 @@
 package command
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"regexp"
+	"strings"
+
 	"github.com/alexhokl/go-bb-pr/client"
+	"github.com/alexhokl/go-bb-pr/git"
 	"github.com/alexhokl/go-bb-pr/models"
+	"github.com/alexhokl/helper/iohelper"
+	regexhelper "github.com/alexhokl/helper/regex"
 	"github.com/spf13/cobra"
+	"golang.org/x/oauth2"
 )
 
 // Cli interface
@@ -25,11 +36,9 @@ type idOption struct {
 }
 
 // NewManagerCli creates a new manager cli instance
-func NewManagerCli(cred *models.UserCredential, repo *models.Repository) *ManagerCli {
+func NewManagerCli() *ManagerCli {
 	cli := ManagerCli{
-		client:     client.NewClient(),
-		credential: cred,
-		repo:       repo,
+		client: client.NewClient(),
 	}
 	return &cli
 }
@@ -52,5 +61,65 @@ func (cli *ManagerCli) Repo() *models.Repository {
 // ShowHelp shows the command help
 func (cli *ManagerCli) ShowHelp(cmd *cobra.Command, args []string) error {
 	cmd.HelpFunc()(cmd, args)
+	return nil
+}
+
+// SetCredentials retrieves credentials (access token) from a local configuration file
+func (cli *ManagerCli) SetCredentials() error {
+	tokenPath, errPath := getTokenPath()
+	if errPath != nil {
+		return errPath
+	}
+	if !iohelper.IsFileExist(tokenPath) {
+		return fmt.Errorf("Please run command login before continue on")
+	}
+
+	file, errFile := ioutil.ReadFile(tokenPath)
+	if errFile != nil {
+		return fmt.Errorf("Please run command login before continue on: %v", errFile)
+	}
+
+	token := oauth2.Token{}
+	err := json.Unmarshal(file, &token)
+	if err != nil {
+		return fmt.Errorf("Please run command login before continue on: %v", err)
+	}
+
+	cli.credential = &models.UserCredential{
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+	}
+
+	return nil
+}
+
+// SetRepository sets repository information using information from git setup
+// in the current directory
+func (cli *ManagerCli) SetRepository() error {
+	cmdOut, err := git.GetOriginURL()
+	if err != nil {
+		if strings.Contains(err.Error(), "129") {
+			return errors.New("git remote get-url is not supported. Please upgrade to the latest version of git")
+		}
+		return err
+	}
+
+	remote := string(cmdOut)
+	if !strings.Contains(remote, "bitbucket.org") {
+		return errors.New("Error: Only repository of BitBucket is supported")
+	}
+
+	regex := regexp.MustCompile(`bitbucket\.org/(?P<org>\w+)\/(?P<name>.*)`)
+	matches := regexhelper.FindNamedGroupMatchedStrings(regex, remote)
+
+	if matches["org"] == "" || matches["name"] == "" {
+		return fmt.Errorf("Error: Unable to retrieve repository name")
+	}
+
+	cli.repo = &models.Repository{
+		Org:  matches["org"],
+		Name: matches["name"],
+	}
+
 	return nil
 }

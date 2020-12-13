@@ -2,8 +2,8 @@ package command
 
 import (
 	"fmt"
-	"io/ioutil"
 
+	"github.com/alexhokl/helper/iohelper"
 	"github.com/spf13/cobra"
 )
 
@@ -24,6 +24,14 @@ func NewCommentCommand(cli *ManagerCli) *cobra.Command {
 			if len(args) != 0 {
 				cli.ShowHelp(cmd, args)
 				return nil
+			}
+			errRepo := cli.SetRepository()
+			if errRepo != nil {
+				return errRepo
+			}
+			errCred := cli.SetCredentials()
+			if errCred != nil {
+				return errCred
 			}
 			return runComment(cli, opts)
 		},
@@ -50,11 +58,11 @@ func runComment(cli *ManagerCli, opts commentOptions) error {
 
 	message := opts.message
 	if opts.markdownFilename != "" {
-		file, errFile := ioutil.ReadFile(opts.markdownFilename)
+		var errFile error
+		message, errFile = iohelper.ReadStringFromFile(opts.markdownFilename)
 		if errFile != nil {
 			return errFile
 		}
-		message = string(file)
 	}
 
 	client := cli.Client()

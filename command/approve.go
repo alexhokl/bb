@@ -25,6 +25,14 @@ func NewApproveCommand(cli *ManagerCli) *cobra.Command {
 				cli.ShowHelp(cmd, args)
 				return nil
 			}
+			errRepo := cli.SetRepository()
+			if errRepo != nil {
+				return errRepo
+			}
+			errCred := cli.SetCredentials()
+			if errCred != nil {
+				return errCred
+			}
 			return runApprove(cli, opts)
 		},
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/alexhokl/go-bb-pr/command"
 	"github.com/alexhokl/go-bb-pr/git"
 	"github.com/alexhokl/go-bb-pr/models"
+	regexhelper "github.com/alexhokl/helper/regex"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
@@ -106,7 +107,7 @@ func getRepository() (*models.Repository, error) {
 	}
 
 	regex := regexp.MustCompile(`bitbucket\.org/(?P<org>\w+)\/(?P<name>.*)`)
-	matches := findMatches(regex, remote)
+	matches := regexhelper.FindNamedGroupMatchedStrings(regex, remote)
 
 	if matches["org"] == "" || matches["name"] == "" {
 		return nil, fmt.Errorf("Error: Unable to retrieve repository name")
@@ -118,16 +119,4 @@ func getRepository() (*models.Repository, error) {
 	}
 
 	return &r, nil
-}
-
-func findMatches(regex *regexp.Regexp, input string) map[string]string {
-	match := regex.FindStringSubmatch(input)
-	subMatchMap := make(map[string]string)
-	for i, name := range regex.SubexpNames() {
-		if i != 0 {
-			subMatchMap[name] = match[i]
-		}
-	}
-
-	return subMatchMap
 }

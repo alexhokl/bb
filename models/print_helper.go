@@ -2,8 +2,8 @@ package models
 
 import (
 	"fmt"
-	"time"
 
+	"github.com/alexhokl/helper/datetime"
 	"github.com/fatih/color"
 )
 
@@ -17,7 +17,7 @@ func (pr PullRequestDetail) PrintShortDescription(isIncludeCreatedOn bool) {
 	pr.PrintOneLiner()
 
 	if isIncludeCreatedOn {
-		color.New(color.FgGreen).Printf("\tCreated:%s\n", formatLocalTime(pr.UpdatedOn))
+		color.New(color.FgGreen).Printf("\tCreated:%s\n", datetime.GetLocalDateTimeString(&pr.UpdatedOn))
 	}
 
 	color.New(color.FgMagenta).Printf("\t%s",
@@ -41,7 +41,7 @@ func (pr PullRequestDetail) PrintShortDescription(isIncludeCreatedOn bool) {
 // PrintOneLiner prints a short description of the specified pull request
 func (pr PullRequestDetail) PrintOneLiner() {
 	fmt.Printf("%d", pr.ID)
-	color.New(color.FgGreen).Printf(" Updated:%s", formatLocalTime(pr.UpdatedOn))
+	color.New(color.FgGreen).Printf(" Updated:%s", datetime.GetLocalDateTimeString(&pr.UpdatedOn))
 	color.New(color.FgCyan).Printf(" %s", pr.Author.DisplayName)
 	fmt.Printf(" %s\n", pr.Title)
 }
@@ -56,7 +56,7 @@ func (c Comment) ToString() string {
 	return fmt.Sprintf(
 		"Comment by %s (%s): %s",
 		c.User.DisplayName,
-		formatLocalTime(c.UpdatedOn),
+		datetime.GetLocalDateTimeString(&c.UpdatedOn),
 		c.Content.Raw)
 }
 
@@ -65,12 +65,6 @@ func (c Update) ToString() string {
 	return fmt.Sprintf(
 		"Commit made by %s (%s): %s",
 		c.Author.DisplayName,
-		formatLocalTime(c.Date),
+		datetime.GetLocalDateTimeString(&c.Date),
 		c.Source.Commit.Hash)
-}
-
-func formatLocalTime(t time.Time) string {
-	loc, _ := time.LoadLocation("Local")
-	lt := t.In(loc)
-	return lt.Format("2006-01-02 15:04")
 }

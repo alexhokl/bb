@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/alexhokl/go-bb-pr/git"
 	"github.com/alexhokl/go-bb-pr/models"
+	"github.com/alexhokl/helper/git"
 	"github.com/spf13/cobra"
 )
 

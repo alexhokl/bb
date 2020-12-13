@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/alexhokl/go-bb-pr/client"
-	"github.com/alexhokl/go-bb-pr/git"
 	"github.com/alexhokl/go-bb-pr/models"
+	"github.com/alexhokl/helper/git"
 	"github.com/alexhokl/helper/iohelper"
 	"github.com/alexhokl/helper/regexhelper"
 	"github.com/spf13/cobra"

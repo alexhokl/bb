@@ -1,11 +1,10 @@
 package client
 
 import (
-	"encoding/json"
 	"errors"
-	"net/http"
 
 	"github.com/alexhokl/go-bb-pr/models"
+	"github.com/alexhokl/helper/json"
 )
 
 type pullRequestListResponse struct {
@@ -29,7 +28,8 @@ func (client *Client) ListRequests(cred *models.UserCredential, repo *models.Rep
 			msg := getErrorResponseMessage(resp)
 			return nil, errors.New(msg)
 		}
-		listResponse, errParse := parseList(resp)
+		var listResponse pullRequestListResponse
+		errParse := json.ParseJSONReader(resp.Body, &listResponse)
 		if errParse != nil {
 			return nil, errParse
 		}
@@ -44,13 +44,4 @@ func (client *Client) ListRequests(cred *models.UserCredential, repo *models.Rep
 	}
 
 	return list, nil
-}
-
-func parseList(resp *http.Response) (*pullRequestListResponse, error) {
-	var jsonObj pullRequestListResponse
-	err := json.NewDecoder(resp.Body).Decode(&jsonObj)
-	if err != nil {
-		return nil, err
-	}
-	return &jsonObj, nil
 }

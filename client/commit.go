@@ -1,12 +1,11 @@
 package client
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/alexhokl/go-bb-pr/models"
+	"github.com/alexhokl/helper/json"
 )
 
 type commitListResponse struct {
@@ -30,7 +29,8 @@ func (client *Client) ListCommits(cred *models.UserCredential, repo *models.Repo
 			msg := getErrorResponseMessage(resp)
 			return nil, errors.New(msg)
 		}
-		listResponse, errParse := parseCommitList(resp)
+		var listResponse commitListResponse
+		errParse := json.ParseJSONReader(resp.Body, &listResponse)
 		if errParse != nil {
 			return nil, errParse
 		}
@@ -45,13 +45,4 @@ func (client *Client) ListCommits(cred *models.UserCredential, repo *models.Repo
 	}
 
 	return list, nil
-}
-
-func parseCommitList(resp *http.Response) (*commitListResponse, error) {
-	var jsonObj commitListResponse
-	err := json.NewDecoder(resp.Body).Decode(&jsonObj)
-	if err != nil {
-		return nil, err
-	}
-	return &jsonObj, nil
 }

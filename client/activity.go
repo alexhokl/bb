@@ -1,12 +1,11 @@
 package client
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/alexhokl/go-bb-pr/models"
+	"github.com/alexhokl/helper/json"
 )
 
 type pullRequestActivityListResponse struct {
@@ -31,7 +30,9 @@ func (client *Client) ActivityRequest(cred *models.UserCredential, repo *models.
 			msg := getErrorResponseMessage(resp)
 			return nil, errors.New(msg)
 		}
-		listResponse, errParse := parseActivities(resp)
+
+		var listResponse pullRequestActivityListResponse
+		errParse := json.ParseJSONReader(resp.Body, &listResponse)
 		if errParse != nil {
 			return nil, errParse
 		}
@@ -49,13 +50,4 @@ func (client *Client) ActivityRequest(cred *models.UserCredential, repo *models.
 	updatedList := list[:len(list)-1]
 
 	return updatedList, nil
-}
-
-func parseActivities(resp *http.Response) (*pullRequestActivityListResponse, error) {
-	var jsonObj pullRequestActivityListResponse
-	err := json.NewDecoder(resp.Body).Decode(&jsonObj)
-	if err != nil {
-		return nil, err
-	}
-	return &jsonObj, nil
 }

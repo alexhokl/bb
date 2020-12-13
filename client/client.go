@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/alexhokl/go-bb-pr/models"
+	httphelper "github.com/alexhokl/helper/http"
 )
 
 // APIClient interface
@@ -49,7 +48,7 @@ func getBasePath(repo *models.Repository) string {
 
 func newRequest(cred *models.UserCredential, verb string, path string) *http.Request {
 	req, _ := http.NewRequest(verb, path, nil)
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", cred.AccessToken))
+	httphelper.SetBearerTokenHeader(req, cred.AccessToken)
 	return req
 }
 
@@ -62,7 +61,7 @@ func newPostRequest(cred *models.UserCredential, path string, data interface{}) 
 	jsonStr := string(buf.Bytes())
 	replacedStr := strings.Replace(jsonStr, "'", "", -1)
 	req, _ := http.NewRequest("POST", path, bytes.NewBufferString(replacedStr))
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", cred.AccessToken))
+	httphelper.SetBearerTokenHeader(req, cred.AccessToken)
 	req.Header.Set("Content-Type", "application/json")
 	return req, err
 }
@@ -81,24 +80,7 @@ func (client *Client) do(req *http.Request) (*http.Response, error) {
 	return res, err
 }
 
-func dumpResponse(resp *http.Response) error {
-	_, err := io.Copy(os.Stdout, resp.Body)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func getErrorResponseMessage(resp *http.Response) string {
 	return fmt.Sprintf(
 		"Failed response (status code: %d): %s", resp.StatusCode, resp.Status)
-}
-
-func parse(resp *http.Response) (*models.PullRequestDetail, error) {
-	var jsonObj models.PullRequestDetail
-	err := json.NewDecoder(resp.Body).Decode(&jsonObj)
-	if err != nil {
-		return nil, err
-	}
-	return &jsonObj, nil
 }

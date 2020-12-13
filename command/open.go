@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os/exec"
 
+	clihelper "github.com/alexhokl/helper/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -44,7 +45,7 @@ func runOpen(cli *ManagerCli, opts idOption) error {
 		return err
 	}
 
-	cmdName, cmdArgs := getOpenCommand(pr.Links.Html.Href)
+	cmdName, cmdArgs := clihelper.GetOpenCommand(pr.Links.Html.Href)
 	_, errOpen := exec.Command(cmdName, cmdArgs...).Output()
 	if errOpen != nil {
 		return errOpen

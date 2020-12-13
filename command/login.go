@@ -12,6 +12,7 @@ import (
 	"os/user"
 	"time"
 
+	clihelper "github.com/alexhokl/helper/cli"
 	jsonhelper "github.com/alexhokl/helper/json"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -100,7 +101,7 @@ func runLogin(cli *ManagerCli, opts loginOptions) error {
 
 	fmt.Println("You will now be taken to your browser for authentication")
 	time.Sleep(1 * time.Second)
-	cmdName, cmdArgs := getOpenCommand(url)
+	cmdName, cmdArgs := clihelper.GetOpenCommand(url)
 	_, errOpen := exec.Command(cmdName, cmdArgs...).Output()
 	if errOpen != nil {
 		return errOpen

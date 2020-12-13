@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/alexhokl/go-bb-pr/models"
-	httphelper "github.com/alexhokl/helper/http"
+	"github.com/alexhokl/helper/httphelper"
 )
 
 // APIClient interface

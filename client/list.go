@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/alexhokl/go-bb-pr/models"
-	"github.com/alexhokl/helper/json"
+	"github.com/alexhokl/helper/jsonhelper"
 )
 
 type pullRequestListResponse struct {
@@ -29,7 +29,7 @@ func (client *Client) ListRequests(cred *models.UserCredential, repo *models.Rep
 			return nil, errors.New(msg)
 		}
 		var listResponse pullRequestListResponse
-		errParse := json.ParseJSONReader(resp.Body, &listResponse)
+		errParse := jsonhelper.ParseJSONReader(resp.Body, &listResponse)
 		if errParse != nil {
 			return nil, errParse
 		}

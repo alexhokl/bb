@@ -14,7 +14,7 @@ import (
 
 	clihelper "github.com/alexhokl/helper/cli"
 	"github.com/alexhokl/helper/iohelper"
-	jsonhelper "github.com/alexhokl/helper/json"
+	"github.com/alexhokl/helper/jsonhelper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"

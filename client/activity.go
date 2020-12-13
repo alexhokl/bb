@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/alexhokl/go-bb-pr/models"
-	"github.com/alexhokl/helper/json"
+	"github.com/alexhokl/helper/jsonhelper"
 )
 
 type pullRequestActivityListResponse struct {
@@ -32,7 +32,7 @@ func (client *Client) ActivityRequest(cred *models.UserCredential, repo *models.
 		}
 
 		var listResponse pullRequestActivityListResponse
-		errParse := json.ParseJSONReader(resp.Body, &listResponse)
+		errParse := jsonhelper.ParseJSONReader(resp.Body, &listResponse)
 		if errParse != nil {
 			return nil, errParse
 		}

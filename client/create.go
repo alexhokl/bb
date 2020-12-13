@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/alexhokl/go-bb-pr/models"
-	"github.com/alexhokl/helper/json"
+	"github.com/alexhokl/helper/jsonhelper"
 )
 
 // CreateRequest makes an API call to create the specified pull requests
@@ -26,6 +26,6 @@ func (client *Client) CreateRequest(cred *models.UserCredential, repo *models.Re
 	}
 
 	var obj models.PullRequestDetail
-	errParse := json.ParseJSONReader(resp.Body, &obj)
+	errParse := jsonhelper.ParseJSONReader(resp.Body, &obj)
 	return &obj, errParse
 }

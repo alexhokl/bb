@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/alexhokl/go-bb-pr/models"
-	"github.com/alexhokl/helper/json"
+	"github.com/alexhokl/helper/jsonhelper"
 )
 
 // GetRequest makes an API call to retrieve the specified pull request
@@ -23,6 +23,6 @@ func (client *Client) GetRequest(cred *models.UserCredential, repo *models.Repos
 	}
 
 	var obj models.PullRequestDetail
-	errParse := json.ParseJSONReader(resp.Body, &obj)
+	errParse := jsonhelper.ParseJSONReader(resp.Body, &obj)
 	return &obj, errParse
 }

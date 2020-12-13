@@ -12,7 +12,7 @@ import (
 	"github.com/alexhokl/go-bb-pr/git"
 	"github.com/alexhokl/go-bb-pr/models"
 	"github.com/alexhokl/helper/iohelper"
-	regexhelper "github.com/alexhokl/helper/regex"
+	"github.com/alexhokl/helper/regexhelper"
 	"github.com/spf13/cobra"
 	"golang.org/x/oauth2"
 )

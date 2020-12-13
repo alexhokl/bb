@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/alexhokl/go-bb-pr/models"
-	"github.com/alexhokl/helper/json"
+	"github.com/alexhokl/helper/jsonhelper"
 )
 
 type commitListResponse struct {
@@ -30,7 +30,7 @@ func (client *Client) ListCommits(cred *models.UserCredential, repo *models.Repo
 			return nil, errors.New(msg)
 		}
 		var listResponse commitListResponse
-		errParse := json.ParseJSONReader(resp.Body, &listResponse)
+		errParse := jsonhelper.ParseJSONReader(resp.Body, &listResponse)
 		if errParse != nil {
 			return nil, errParse
 		}

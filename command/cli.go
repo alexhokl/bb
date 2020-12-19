@@ -1,20 +1,17 @@
 package command
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"regexp"
 	"strings"
 
 	"github.com/alexhokl/go-bb-pr/client"
 	"github.com/alexhokl/go-bb-pr/models"
 	"github.com/alexhokl/helper/git"
-	"github.com/alexhokl/helper/iohelper"
 	"github.com/alexhokl/helper/regexhelper"
 	"github.com/spf13/cobra"
-	"golang.org/x/oauth2"
+	"github.com/spf13/viper"
 )
 
 // Cli interface
@@ -66,30 +63,46 @@ func (cli *ManagerCli) ShowHelp(cmd *cobra.Command, args []string) error {
 
 // SetCredentials retrieves credentials (access token) from a local configuration file
 func (cli *ManagerCli) SetCredentials() error {
-	tokenPath, errPath := getTokenPath()
-	if errPath != nil {
-		return errPath
-	}
-	if !iohelper.IsFileExist(tokenPath) {
+	accessToken := viper.GetString("access_token")
+	if accessToken == "" {
 		return fmt.Errorf("Please run command login before continue on")
 	}
+	refreshToken := viper.GetString("refresh_token")
 
-	file, errFile := ioutil.ReadFile(tokenPath)
-	if errFile != nil {
-		return fmt.Errorf("Please run command login before continue on: %v", errFile)
+	if cli.credential == nil {
+		cli.credential = &models.UserCredential{
+			AccessToken:  accessToken,
+			RefreshToken: refreshToken,
+		}
+		return nil
+	}
+	cli.credential.AccessToken = accessToken
+	cli.credential.RefreshToken = refreshToken
+
+	return nil
+}
+
+// SetJiraCredentials retrieves JIRA credentials from either configuration file
+// or environment variables
+func (cli *ManagerCli) SetJiraCredentials() error {
+	email := viper.GetString("jira_email")
+	if email == "" {
+		return fmt.Errorf("Email address of JIRA has not been configured")
+	}
+	key := viper.GetString("jira_api_key")
+	if key == "" {
+		return fmt.Errorf("API Key of JIRA has not been configured")
 	}
 
-	token := oauth2.Token{}
-	err := json.Unmarshal(file, &token)
-	if err != nil {
-		return fmt.Errorf("Please run command login before continue on: %v", err)
+	if cli.credential == nil {
+		cli.credential = &models.UserCredential{
+			JiraEmailAddress: email,
+			JiraAPIKey:       key,
+		}
+		return nil
 	}
-
-	cli.credential = &models.UserCredential{
-		AccessToken:  token.AccessToken,
-		RefreshToken: token.RefreshToken,
-	}
-
+	cli.credential.JiraEmailAddress = email
+	cli.credential.JiraAPIKey = key
 	return nil
 }
 

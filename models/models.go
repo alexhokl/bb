@@ -120,6 +120,21 @@ type CommentRequest struct {
 	Content RawContent `json:"content"`
 }
 
+// IssueRequest contains fields for making a request to JIRA API issue endpoints
+type IssueRequest struct {
+	Update UpdateIssue `json:"update"`
+}
+
+// UpdateIssue contains fields to update a JIRA issue
+type UpdateIssue struct {
+	Labels []LabelReqeuest `json:"labels"`
+}
+
+// LabelReqeuest contains fields to update labels of a JIRA issue
+type LabelReqeuest struct {
+	Add string `json:"add"`
+}
+
 // Repository struct
 type Repository struct {
 	Org  string
@@ -128,8 +143,15 @@ type Repository struct {
 
 // UserCredential struct
 type UserCredential struct {
-	AccessToken  string
-	RefreshToken string
+	AccessToken      string
+	RefreshToken     string
+	JiraEmailAddress string
+	JiraAPIKey       string
+}
+
+// HasJiraCredentials return true if JIRA credentials has been configured
+func (cred UserCredential) HasJiraCredentials() bool {
+	return cred.JiraEmailAddress != "" && cred.JiraAPIKey != ""
 }
 
 // IsApproved checks the pull request has been approved by

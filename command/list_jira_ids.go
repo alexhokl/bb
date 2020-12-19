@@ -37,6 +37,12 @@ func NewListJiraIDsCommand(cli *ManagerCli) *cobra.Command {
 			if errCred != nil {
 				return errCred
 			}
+			if opts.label != "" {
+				errJiraCred := cli.SetJiraCredentials()
+				if errJiraCred != nil {
+					return errJiraCred
+				}
+			}
 			return runListJiraIDs(cli, opts)
 		},
 	}
@@ -45,7 +51,7 @@ func NewListJiraIDsCommand(cli *ManagerCli) *cobra.Command {
 	flags.IntVarP(&opts.pullRequestID, "id", "i", 0, "Pull request ID")
 	flags.BoolVar(&opts.isCommaSeparated, "comma", false, "comma separated list")
 	flags.StringArrayVarP(&opts.idPrefixes, "prefixes", "p", []string{}, "Comma separated list of JIRA ID prefixes")
-	// flags.StringVar(&opts.label, "label", "", "Label to be applied to all issues")
+	flags.StringVar(&opts.label, "label", "", "Label to be applied to all issues")
 
 	return cmd
 }
@@ -89,11 +95,22 @@ func runListJiraIDs(cli *ManagerCli, opts listJiraIDsOptions) error {
 
 	if opts.isCommaSeparated {
 		fmt.Printf(collection.GetDelimitedString(distinctIDs, ", "))
-		return nil
+		fmt.Println()
+	} else {
+		for _, i := range distinctIDs {
+			fmt.Println(i)
+		}
 	}
 
-	for _, i := range distinctIDs {
-		fmt.Println(i)
+	if opts.label != "" {
+		for _, i := range distinctIDs {
+			errLabel := client.AddJiraLabels(cred, repo, i, opts.label)
+			if errLabel != nil {
+				return errLabel
+			}
+			fmt.Printf("Added label [%s] to JIRA issue [%s].\n", opts.label, i)
+		}
 	}
+
 	return nil
 }

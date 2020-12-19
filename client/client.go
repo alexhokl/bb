@@ -23,6 +23,7 @@ type APIClient interface {
 	CreateRequest(cred *models.UserCredential, repo *models.Repository, req *models.PullRequestCreateRequest) (*models.PullRequestDetail, error)
 	AddComment(cred *models.UserCredential, repo *models.Repository, id int, comment string) error
 	ListCommits(cred *models.UserCredential, repo *models.Repository, pullRequestID int) ([]models.CommitInfo, error)
+	AddJiraLabels(cred *models.UserCredential, repo *models.Repository, jiraID string, labels ...string) error
 }
 
 // Client struct
@@ -46,6 +47,14 @@ func getBasePath(repo *models.Repository) string {
 		repo.Name)
 }
 
+func getJiraAPIPath(repo *models.Repository, endpoint string) string {
+	return fmt.Sprintf(
+		"https://%s.atlassian.net/rest/api/3/%s",
+		repo.Org,
+		endpoint,
+	)
+}
+
 func newRequest(cred *models.UserCredential, verb string, path string) *http.Request {
 	req, _ := http.NewRequest(verb, path, nil)
 	httphelper.SetBearerTokenHeader(req, cred.AccessToken)
@@ -62,6 +71,34 @@ func newPostRequest(cred *models.UserCredential, path string, data interface{}) 
 	replacedStr := strings.Replace(jsonStr, "'", "", -1)
 	req, _ := http.NewRequest("POST", path, bytes.NewBufferString(replacedStr))
 	httphelper.SetBearerTokenHeader(req, cred.AccessToken)
+	req.Header.Set("Content-Type", "application/json")
+	return req, err
+}
+
+func newJiraPostRequest(cred *models.UserCredential, path string, data interface{}) (*http.Request, error) {
+	buf := new(bytes.Buffer)
+	err := json.NewEncoder(buf).Encode(data)
+	if err != nil {
+		return nil, err
+	}
+	jsonStr := string(buf.Bytes())
+	replacedStr := strings.Replace(jsonStr, "'", "", -1)
+	req, _ := http.NewRequest("POST", path, bytes.NewBufferString(replacedStr))
+	req.SetBasicAuth(cred.JiraEmailAddress, cred.JiraAPIKey)
+	req.Header.Set("Content-Type", "application/json")
+	return req, err
+}
+
+func newJiraPutRequest(cred *models.UserCredential, path string, data interface{}) (*http.Request, error) {
+	buf := new(bytes.Buffer)
+	err := json.NewEncoder(buf).Encode(data)
+	if err != nil {
+		return nil, err
+	}
+	jsonStr := string(buf.Bytes())
+	replacedStr := strings.Replace(jsonStr, "'", "", -1)
+	req, _ := http.NewRequest("PUT", path, bytes.NewBufferString(replacedStr))
+	req.SetBasicAuth(cred.JiraEmailAddress, cred.JiraAPIKey)
 	req.Header.Set("Content-Type", "application/json")
 	return req, err
 }

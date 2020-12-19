@@ -9,12 +9,9 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"os/user"
 	"time"
 
 	clihelper "github.com/alexhokl/helper/cli"
-	"github.com/alexhokl/helper/iohelper"
-	"github.com/alexhokl/helper/jsonhelper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
@@ -31,8 +28,6 @@ var (
 )
 
 const port = 9990
-const tokenDirectory = ".go_bb_pr"
-const tokenFilename = "token.json"
 
 // NewLoginCommand returns definition of command list
 func NewLoginCommand(cli *ManagerCli) *cobra.Command {
@@ -56,30 +51,12 @@ func NewLoginCommand(cli *ManagerCli) *cobra.Command {
 	return cmd
 }
 
-// getTokenPath returns full path to token JSON file
-func getTokenPath() (string, error) {
-	directory, err := getTokenDirectory(tokenDirectory)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%s/%s", directory, tokenFilename), nil
-}
-
 func runLogin(cli *ManagerCli, opts loginOptions) error {
 	clientID := viper.GetString("client_id")
 	clientSecret := viper.GetString("client_secret")
 
 	if clientID == "" || clientSecret == "" {
 		return fmt.Errorf("client_id or client_secret is not configured")
-	}
-
-	tokenDirectoryFullPath, errDir := getTokenDirectory(tokenDirectory)
-	if errDir != nil {
-		return fmt.Errorf("Unable to create token directory [$HOME/%s]: %v", tokenDirectory, errDir)
-	}
-	errEnsureDir := ensureDirectory(tokenDirectoryFullPath)
-	if errEnsureDir != nil {
-		return fmt.Errorf("Unable to create token directory [%s]: %v", tokenDirectoryFullPath, errEnsureDir)
 	}
 
 	ctx = context.Background()
@@ -124,40 +101,18 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	tokenPath, _ := getTokenPath()
-	errJSON := jsonhelper.WriteToJSONFile(tokenPath, token, true)
-	if errJSON != nil {
-		fmt.Printf("Unable to write token to [%s]: %v", tokenPath, errJSON)
-		os.Exit(1)
-		return
-	}
+	viper.Set("access_token", token.AccessToken)
+	viper.Set("refresh_token", token.RefreshToken)
+	viper.WriteConfig()
 
 	msg := "<p><strong>Success!</strong></p>"
 	msg = msg + "<p>You are authenticated and can now return to the CLI.</p>"
 	fmt.Fprintf(w, msg)
 
-	fmt.Printf("Login has been completed successfully. Tokens are stored in [%s]\n", tokenPath)
+	fmt.Println("Login has been completed successfully.")
 
 	go func() {
 		time.Sleep(5 * time.Second)
 		os.Exit(0)
 	}()
-}
-
-func getTokenDirectory(path string) (string, error) {
-	usr, errCurrent := user.Current()
-	if errCurrent != nil {
-		return "", errCurrent
-	}
-	return fmt.Sprintf("%s/%s", usr.HomeDir, path), nil
-}
-
-func ensureDirectory(path string) error {
-	if !iohelper.IsDirectoryExist(path) {
-		errMkdir := os.Mkdir(path, 0755)
-		if errMkdir != nil {
-			return errMkdir
-		}
-	}
-	return nil
 }

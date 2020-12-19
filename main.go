@@ -5,14 +5,14 @@ import (
 	"os"
 
 	"github.com/alexhokl/go-bb-pr/command"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-func main() {
-	viper.SetEnvPrefix("bb_pr")
-	viper.AutomaticEnv()
+var configurationFilePath string
 
+func main() {
 	managerCli := command.NewManagerCli()
 	cmd := newManagerCommand(managerCli)
 
@@ -39,6 +39,38 @@ func newManagerCommand(cli *command.ManagerCli) *cobra.Command {
 			return cli.ShowHelp(cmd, args)
 		},
 	}
+
+	cmd.PersistentFlags().StringVar(&configurationFilePath, "config", "", "config file (default is $HOME/.bb_pr.yaml)")
+
+	cobra.OnInitialize(initConfig)
+
 	command.AddCommands(cmd, cli)
 	return cmd
+}
+
+// initConfig reads in config file and ENV variables if set.
+func initConfig() {
+	if configurationFilePath != "" {
+		// Use config file from the flag.
+		viper.SetConfigFile(configurationFilePath)
+	} else {
+		// Find home directory.
+		home, err := homedir.Dir()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		// Search config in home directory with name ".gravity-cli" (without extension).
+		viper.AddConfigPath(home)
+		viper.SetConfigName(".bb_pr")
+	}
+
+	viper.SetEnvPrefix("bb_pr")
+	viper.AutomaticEnv() // read in environment variables that match
+
+	// If a config file is found, read it in.
+	if err := viper.ReadInConfig(); err == nil {
+		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	}
 }

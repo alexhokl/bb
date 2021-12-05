@@ -12,8 +12,7 @@ import (
 )
 
 type listWorkspaceMembersOptions struct {
-	workspace string
-	isQuiet   bool
+	isQuiet bool
 }
 
 // NewListWorkspaceDefaultReviewersCommand returns definition of command list
@@ -42,7 +41,6 @@ func NewListWorkspaceMembersCommand(cli *ManagerCli) *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.BoolVarP(&opts.isQuiet, "quiet", "q", false, "UUIDs only")
-	flags.StringVarP(&opts.workspace, "workspace", "w", "", "Name of a workspace")
 
 	return cmd
 }
@@ -52,8 +50,9 @@ func runListWorkspaceMembers(cli *ManagerCli, opts listWorkspaceMembersOptions) 
 	auth := context.WithValue(context.Background(), api.ContextAccessToken, cred.AccessToken)
 	config := api.NewConfiguration()
 	apiClient := api.NewAPIClient(config)
+	repo := cli.Repo()
 
-	list, _, err := apiClient.WorkspacesApi.WorkspacesWorkspaceMembersGet(auth, opts.workspace)
+	list, _, err := apiClient.WorkspacesApi.WorkspacesWorkspaceMembersGet(auth, repo.Org)
 	if err != nil {
 		return err
 	}

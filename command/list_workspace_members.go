@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/alexhokl/bb/api"
 	"github.com/olekukonko/tablewriter"
@@ -64,7 +63,7 @@ func runListWorkspaceMembers(cli *ManagerCli, opts listWorkspaceMembersOptions) 
 
 	if opts.isQuiet {
 		for _, m := range members {
-			fmt.Println(strings.ReplaceAll(strings.ReplaceAll(m.User.Uuid, "{", ""), "}", ""))
+			fmt.Println(m.User.Uuid)
 		}
 		return nil
 	}
@@ -72,7 +71,7 @@ func runListWorkspaceMembers(cli *ManagerCli, opts listWorkspaceMembersOptions) 
 	var data [][]string
 	for _, m := range members {
 		arr := []string{
-			strings.ReplaceAll(strings.ReplaceAll(m.User.Uuid, "{", ""), "}", ""),
+			m.User.Uuid,
 			m.User.DisplayName,
 		}
 		data = append(data, arr)

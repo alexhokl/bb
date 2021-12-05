@@ -1,15 +1,18 @@
 package command
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
 )
 
 type listOptions struct {
-	isQuiet              bool
-	isInDetail           bool
-	isIncldeCreationTime bool
+	isQuiet               bool
+	isInDetail            bool
+	isIncldeCreationTime  bool
+	destinationBranchName string
+	sourceBranchName      string
 }
 
 // NewListCommand returns definition of command list
@@ -41,6 +44,8 @@ func NewListCommand(cli *ManagerCli) *cobra.Command {
 	flags.BoolVar(&opts.isInDetail, "detail", false, "List in detail")
 	flags.BoolVar(
 		&opts.isIncldeCreationTime, "created-time", false, "Include created time")
+	flags.StringVarP(&opts.destinationBranchName, "destination", "d", "", "Destination branch")
+	flags.StringVarP(&opts.sourceBranchName, "source", "s", "", "Source branch")
 
 	return cmd
 }
@@ -49,6 +54,10 @@ func runList(cli *ManagerCli, opts listOptions) error {
 	client := cli.Client()
 	cred := cli.UserCredential()
 	repo := cli.Repo()
+
+	if opts.sourceBranchName != "" && opts.destinationBranchName != "" && opts.sourceBranchName == opts.destinationBranchName {
+		return errors.New("source branch cannot be same as destination branch")
+	}
 
 	prList, err := client.ListRequests(cred, repo)
 	if err != nil {
@@ -61,6 +70,12 @@ func runList(cli *ManagerCli, opts listOptions) error {
 	}
 
 	for _, pr := range prList {
+		if opts.sourceBranchName != "" && pr.Source.Branch.Name != opts.sourceBranchName {
+			continue
+		}
+		if opts.destinationBranchName != "" && pr.Destination.Branch.Name != opts.destinationBranchName {
+			continue
+		}
 		prInfo, _ := client.GetRequest(cred, repo, pr.ID)
 		if opts.isQuiet {
 			prInfo.PrintID()

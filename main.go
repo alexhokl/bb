@@ -11,6 +11,7 @@ import (
 )
 
 var configurationFilePath string
+var verbose bool
 
 func main() {
 	managerCli := command.NewManagerCli()
@@ -41,6 +42,7 @@ func newManagerCommand(cli *command.ManagerCli) *cobra.Command {
 	}
 
 	cmd.PersistentFlags().StringVar(&configurationFilePath, "config", "", "config file (default is $HOME/.bb_pr.yaml)")
+	cmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose mode (default is off)")
 
 	cobra.OnInitialize(initConfig)
 
@@ -63,14 +65,14 @@ func initConfig() {
 
 		// Search config in home directory with name ".gravity-cli" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".bb_pr")
+		viper.SetConfigName(".bb")
 	}
 
-	viper.SetEnvPrefix("bb_pr")
+	viper.SetEnvPrefix("bb")
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
+	if err := viper.ReadInConfig(); err == nil && verbose {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
 }

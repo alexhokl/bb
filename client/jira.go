@@ -3,7 +3,7 @@ package client
 import (
 	"fmt"
 
-	"github.com/alexhokl/go-bb-pr/models"
+	"github.com/alexhokl/bb/models"
 )
 
 // AddJiraLabels adds labels to the specified JIRA issues
@@ -24,6 +24,9 @@ func (client *Client) AddJiraLabels(cred *models.UserCredential, repo *models.Re
 		},
 	}
 	req, err := newJiraPutRequest(cred, path, data)
+	if err != nil {
+		return err
+	}
 	resp, err := client.do(req)
 	if err != nil {
 		return err

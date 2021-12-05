@@ -50,7 +50,7 @@ func NewCheckoutCommand(cli *ManagerCli) *cobra.Command {
 
 func runCheckout(cli *ManagerCli, opts checkoutOptions) error {
 	if opts.id <= 0 {
-		return errors.New("Invalid pull request ID")
+		return errors.New("invalid pull request ID")
 	}
 
 	client := cli.Client()
@@ -62,7 +62,7 @@ func runCheckout(cli *ManagerCli, opts checkoutOptions) error {
 		return errStatus
 	}
 	if len(statusOutput) > 0 {
-		return errors.New("Working directory is not prestine. Please stash your work and try again")
+		return errors.New("working directory is not prestine. Please stash your work and try again")
 	}
 
 	pr, err := client.GetRequest(cred, repo, opts.id)

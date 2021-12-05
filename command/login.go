@@ -107,7 +107,7 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	msg := "<p><strong>Success!</strong></p>"
 	msg = msg + "<p>You are authenticated and can now return to the CLI.</p>"
-	fmt.Fprintf(w, msg)
+	fmt.Fprint(w, msg)
 
 	fmt.Println("Login has been completed successfully.")
 

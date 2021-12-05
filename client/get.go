@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/alexhokl/go-bb-pr/models"
+	"github.com/alexhokl/bb/models"
 	"github.com/alexhokl/helper/jsonhelper"
 )
 

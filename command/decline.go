@@ -40,7 +40,7 @@ func NewDeclineCommand(cli *ManagerCli) *cobra.Command {
 
 func runDecline(cli *ManagerCli, opts commentOptions) error {
 	if opts.id <= 0 {
-		return errors.New("Invalid pull request ID")
+		return errors.New("invalid pull request ID")
 	}
 
 	client := cli.Client()

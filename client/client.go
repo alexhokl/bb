@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/alexhokl/go-bb-pr/models"
+	"github.com/alexhokl/bb/models"
 	"github.com/alexhokl/helper/httphelper"
 )
 
@@ -67,8 +67,8 @@ func newPostRequest(cred *models.UserCredential, path string, data interface{}) 
 	if err != nil {
 		return nil, err
 	}
-	jsonStr := string(buf.Bytes())
-	replacedStr := strings.Replace(jsonStr, "'", "", -1)
+	jsonStr := buf.String()
+	replacedStr := strings.ReplaceAll(jsonStr, "'", "")
 	req, _ := http.NewRequest("POST", path, bytes.NewBufferString(replacedStr))
 	httphelper.SetBearerTokenHeader(req, cred.AccessToken)
 	req.Header.Set("Content-Type", "application/json")
@@ -81,8 +81,8 @@ func newJiraPostRequest(cred *models.UserCredential, path string, data interface
 	if err != nil {
 		return nil, err
 	}
-	jsonStr := string(buf.Bytes())
-	replacedStr := strings.Replace(jsonStr, "'", "", -1)
+	jsonStr := buf.String()
+	replacedStr := strings.ReplaceAll(jsonStr, "'", "")
 	req, _ := http.NewRequest("POST", path, bytes.NewBufferString(replacedStr))
 	req.SetBasicAuth(cred.JiraEmailAddress, cred.JiraAPIKey)
 	req.Header.Set("Content-Type", "application/json")
@@ -95,8 +95,8 @@ func newJiraPutRequest(cred *models.UserCredential, path string, data interface{
 	if err != nil {
 		return nil, err
 	}
-	jsonStr := string(buf.Bytes())
-	replacedStr := strings.Replace(jsonStr, "'", "", -1)
+	jsonStr := buf.String()
+	replacedStr := strings.ReplaceAll(jsonStr, "'", "")
 	req, _ := http.NewRequest("PUT", path, bytes.NewBufferString(replacedStr))
 	req.SetBasicAuth(cred.JiraEmailAddress, cred.JiraAPIKey)
 	req.Header.Set("Content-Type", "application/json")
@@ -109,10 +109,10 @@ func (client *Client) do(req *http.Request) (*http.Response, error) {
 		return res, err
 	}
 	if res.StatusCode == http.StatusUnauthorized {
-		return res, fmt.Errorf("Please run command login before continue on")
+		return res, fmt.Errorf("please run command login before continue on")
 	}
 	if res.StatusCode == http.StatusForbidden {
-		return res, fmt.Errorf("You are not authorized to perform this action")
+		return res, fmt.Errorf("you are not authorized to perform this action")
 	}
 	return res, err
 }

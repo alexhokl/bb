@@ -41,7 +41,7 @@ func NewOpenCommand(cli *ManagerCli) *cobra.Command {
 
 func runOpen(cli *ManagerCli, opts idOption) error {
 	if opts.id <= 0 {
-		return errors.New("Invalid pull request ID")
+		return errors.New("invalid pull request ID")
 	}
 
 	client := cli.Client()

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/alexhokl/go-bb-pr/models"
+	"github.com/alexhokl/bb/models"
 	"github.com/alexhokl/helper/git"
 	"github.com/spf13/cobra"
 )
@@ -51,7 +51,7 @@ func NewCreateCommand(cli *ManagerCli) *cobra.Command {
 
 func runCreate(cli *ManagerCli, opts createOptions) error {
 	if opts.destinationBranchName == "" {
-		return errors.New("Destination branch is not specified")
+		return errors.New("destination branch is not specified")
 	}
 
 	_, errFetch := git.Fetch()
@@ -73,7 +73,7 @@ func runCreate(cli *ManagerCli, opts createOptions) error {
 	}
 
 	if opts.sourceBranchName == opts.destinationBranchName {
-		return errors.New("Source branch cannot be same as destination branch")
+		return errors.New("source branch cannot be same as destination branch")
 	}
 
 	if opts.title == "" {

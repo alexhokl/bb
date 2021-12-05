@@ -86,15 +86,13 @@ func runListJiraIDs(cli *ManagerCli, opts listJiraIDsOptions) error {
 	var ids []string
 	for _, c := range list {
 		matches := regex.FindAllString(c.Summary.Raw, -1)
-		for _, m := range matches {
-			ids = append(ids, m)
-		}
+		ids = append(ids, matches...)
 	}
 	distinctIDs := collection.GetDistinct(ids)
 	sort.Strings(distinctIDs)
 
 	if opts.isCommaSeparated {
-		fmt.Printf(collection.GetDelimitedString(distinctIDs, ", "))
+		fmt.Print(collection.GetDelimitedString(distinctIDs, ", "))
 		fmt.Println()
 	} else {
 		for _, i := range distinctIDs {

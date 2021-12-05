@@ -46,7 +46,7 @@ func NewApproveCommand(cli *ManagerCli) *cobra.Command {
 
 func runApprove(cli *ManagerCli, opts approveOptions) error {
 	if opts.id <= 0 {
-		return errors.New("Invalid pull request ID")
+		return errors.New("invalid pull request ID")
 	}
 
 	client := cli.Client()

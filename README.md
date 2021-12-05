@@ -1,9 +1,9 @@
-# BitBucket Pull Request Manager [![Build Status](https://travis-ci.org/alexhokl/go-bb-pr.svg?branch=master)](https://travis-ci.org/alexhokl/go-bb-pr)
+# BitBucket Pull Request Manager [![Build Status](https://travis-ci.org/alexhokl/bb.svg?branch=master)](https://travis-ci.org/alexhokl/bb)
 
 This is a command line tool to help working with BitBucket pull requests.
 
 Usage:
-  go-bb-pr [command]
+  bb [command]
 
 Available Commands:
 
@@ -21,13 +21,13 @@ open          | Open the web page of the specified pull request in a browser
 unapprove     | Un-approve the specified pull request
 list-jira-ids | list all JIRA IDs involved in a pull request
 
-Use "go-bb-pr [command] --help" for more information about a command.
+Use "bb [command] --help" for more information about a command.
 
 ### Installation
 
 If the machine has Go installed, simply run `go get -u
-github.com/alexhokl/go-bb-pr`. If not, download the latest binary from
-[release](https://github.com/alexhokl/go-bb-pr/releases) page, and drop it to
+github.com/alexhokl/bb`. If not, download the latest binary from
+[release](https://github.com/alexhokl/bb/releases) page, and drop it to
 a directory where it is in of the directories specified in `PATH` environment
 variable.
 
@@ -42,5 +42,5 @@ To create a cross-machine build, for instance, building a Windows executable on
 a Mac,
 
 ```console
-GOOS=windows GOARCH=amd64 go build -o go-bb-pr.win64.exe
+GOOS=windows GOARCH=amd64 go build -o bb.win64.exe
 ```

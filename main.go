@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alexhokl/go-bb-pr/command"
+	"github.com/alexhokl/bb/command"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -32,7 +32,7 @@ func main() {
 
 func newManagerCommand(cli *command.ManagerCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "go-bb-pr",
+		Use:          "bb",
 		Short:        "BitBucket Pull Request Manager",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {

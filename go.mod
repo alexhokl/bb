@@ -1,4 +1,4 @@
-module github.com/alexhokl/go-bb-pr
+module github.com/alexhokl/bb
 
 go 1.14
 

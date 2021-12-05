@@ -3,7 +3,7 @@ package client
 import (
 	"errors"
 
-	"github.com/alexhokl/go-bb-pr/models"
+	"github.com/alexhokl/bb/models"
 	"github.com/alexhokl/helper/jsonhelper"
 )
 
@@ -36,9 +36,7 @@ func (client *Client) ListRequests(cred *models.UserCredential, repo *models.Rep
 		if list == nil {
 			list = listResponse.Items
 		} else {
-			for _, r := range listResponse.Items {
-				list = append(list, r)
-			}
+			list = append(list, listResponse.Items...)
 		}
 		path = listResponse.Next
 	}

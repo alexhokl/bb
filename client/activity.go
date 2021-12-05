@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/alexhokl/go-bb-pr/models"
+	"github.com/alexhokl/bb/models"
 	"github.com/alexhokl/helper/jsonhelper"
 )
 
@@ -39,9 +39,7 @@ func (client *Client) ActivityRequest(cred *models.UserCredential, repo *models.
 		if list == nil {
 			list = listResponse.Items
 		} else {
-			for _, e := range listResponse.Items {
-				list = append(list, e)
-			}
+			list = append(list, listResponse.Items...)
 		}
 		path = listResponse.Next
 	}

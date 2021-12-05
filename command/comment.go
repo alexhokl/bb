@@ -47,13 +47,13 @@ func NewCommentCommand(cli *ManagerCli) *cobra.Command {
 
 func runComment(cli *ManagerCli, opts commentOptions) error {
 	if opts.id <= 0 {
-		return fmt.Errorf("Invalid pull request ID")
+		return fmt.Errorf("invalid pull request ID")
 	}
 	if opts.message == "" && opts.markdownFilename == "" {
-		return fmt.Errorf("Message or file must be specified")
+		return fmt.Errorf("message or file must be specified")
 	}
 	if opts.message != "" && opts.markdownFilename != "" {
-		return fmt.Errorf("Message and file cannot be specified at the same time")
+		return fmt.Errorf("message and file cannot be specified at the same time")
 	}
 
 	message := opts.message

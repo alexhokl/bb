@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/alexhokl/go-bb-pr/client"
-	"github.com/alexhokl/go-bb-pr/models"
+	"github.com/alexhokl/bb/client"
+	"github.com/alexhokl/bb/models"
 	"github.com/alexhokl/helper/git"
 	"github.com/alexhokl/helper/regexhelper"
 	"github.com/spf13/cobra"
@@ -65,7 +65,7 @@ func (cli *ManagerCli) ShowHelp(cmd *cobra.Command, args []string) error {
 func (cli *ManagerCli) SetCredentials() error {
 	accessToken := viper.GetString("access_token")
 	if accessToken == "" {
-		return fmt.Errorf("Please run command login before continue on")
+		return fmt.Errorf("please run command login before continue on")
 	}
 	refreshToken := viper.GetString("refresh_token")
 
@@ -87,7 +87,7 @@ func (cli *ManagerCli) SetCredentials() error {
 func (cli *ManagerCli) SetJiraCredentials() error {
 	email := viper.GetString("jira_email")
 	if email == "" {
-		return fmt.Errorf("Email address of JIRA has not been configured")
+		return fmt.Errorf("email address of JIRA has not been configured")
 	}
 	key := viper.GetString("jira_api_key")
 	if key == "" {

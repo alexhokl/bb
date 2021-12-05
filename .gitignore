@@ -23,6 +23,5 @@ _testmain.go
 *.test
 *.prof
 
-go-bb-pr
-bb-pr
+bb
 

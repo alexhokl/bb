@@ -46,7 +46,7 @@ func NewMergeCommand(cli *ManagerCli) *cobra.Command {
 
 func runMerge(cli *ManagerCli, opts mergeOptions) error {
 	if opts.id <= 0 {
-		return errors.New("Invalid pull request ID")
+		return errors.New("invalid pull request ID")
 	}
 
 	client := cli.Client()

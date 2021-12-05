@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/alexhokl/go-bb-pr/models"
+	"github.com/alexhokl/bb/models"
 	"github.com/alexhokl/helper/git"
 	"github.com/spf13/cobra"
 )
@@ -47,7 +47,7 @@ func NewDescribeCommand(cli *ManagerCli) *cobra.Command {
 
 func runDescribe(cli *ManagerCli, opts describeOptions) error {
 	if opts.id <= 0 {
-		return errors.New("Invalid pull request ID")
+		return errors.New("invalid pull request ID")
 	}
 
 	client := cli.Client()

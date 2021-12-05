@@ -23,7 +23,7 @@ func NewListJiraIDsCommand(cli *ManagerCli) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "list-jira-ids",
-		Short: "List pull requests",
+		Short: "List JIRA IDs of a pull requests which has the specified JIRA ID prefix(es)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {
 				cli.ShowHelp(cmd, args)

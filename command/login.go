@@ -2,16 +2,9 @@ package command
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
-	"log"
-	"net/http"
-	"net/url"
-	"os"
-	"os/exec"
-	"time"
 
-	clihelper "github.com/alexhokl/helper/cli"
+	"github.com/alexhokl/helper/authhelper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
@@ -60,59 +53,23 @@ func runLogin(cli *ManagerCli, opts loginOptions) error {
 	}
 
 	ctx = context.Background()
-	conf = &oauth2.Config{
-		ClientID:     clientID,
+	token, err := authhelper.GetToken(ctx, authhelper.OAuthConfig{
+		ClientId:     clientID,
 		ClientSecret: clientSecret,
 		Scopes:       []string{}, // scopes are configured on OAuth Consumers on BitBucket
+		RedirectURI:  "/oauth/callback",
+		Port:         port,
 		Endpoint:     bitbucket.Endpoint,
-		RedirectURL:  fmt.Sprintf("http://localhost:%d/oauth/callback", port),
-	}
-
-	// add transport for self-signed certificate to context
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	sslcli := &http.Client{Transport: tr}
-	ctx = context.WithValue(ctx, oauth2.HTTPClient, sslcli)
-
-	url := conf.AuthCodeURL("state", oauth2.AccessTypeOffline)
-
-	fmt.Println("You will now be taken to your browser for authentication")
-	time.Sleep(1 * time.Second)
-	cmdName, cmdArgs := clihelper.GetOpenCommand(url)
-	_, errOpen := exec.Command(cmdName, cmdArgs...).Output()
-	if errOpen != nil {
-		return errOpen
-	}
-	time.Sleep(1 * time.Second)
-
-	http.HandleFunc("/oauth/callback", callbackHandler)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
-
-	return nil
-}
-
-func callbackHandler(w http.ResponseWriter, r *http.Request) {
-	queryParts, _ := url.ParseQuery(r.URL.RawQuery)
-	code := queryParts["code"][0]
-
-	token, err := conf.Exchange(ctx, code)
+	})
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	viper.Set("access_token", token.AccessToken)
 	viper.Set("refresh_token", token.RefreshToken)
 	viper.WriteConfig()
 
-	msg := "<p><strong>Success!</strong></p>"
-	msg = msg + "<p>You are authenticated and can now return to the CLI.</p>"
-	fmt.Fprint(w, msg)
-
 	fmt.Println("Login has been completed successfully.")
 
-	go func() {
-		time.Sleep(5 * time.Second)
-		os.Exit(0)
-	}()
+	return nil
 }

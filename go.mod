@@ -3,10 +3,9 @@ module github.com/alexhokl/bb
 go 1.14
 
 require (
-	github.com/alexhokl/helper v0.0.37
-	github.com/fatih/color v1.10.0
-	github.com/mitchellh/go-homedir v1.1.0
-	github.com/spf13/cobra v1.1.1
-	github.com/spf13/viper v1.7.0
-	golang.org/x/oauth2 v0.0.0-20201208152858-08078c50e5b5
+	github.com/alexhokl/helper v0.0.47
+	github.com/fatih/color v1.13.0
+	github.com/spf13/cobra v1.4.0
+	github.com/spf13/viper v1.12.0
+	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 )

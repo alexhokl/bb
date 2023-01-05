@@ -16,4 +16,10 @@ type DeploymentEnvironment struct {
 	Uuid string `json:"uuid,omitempty"`
 	// The name of the environment.
 	Name string `json:"name,omitempty"`
+
+	EnvironmentType EnvironmentType `json:"environment_type,omitempty"`
+}
+
+type EnvironmentType struct {
+	Name string `json:"name,omitempty"`
 }

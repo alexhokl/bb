@@ -23,7 +23,8 @@ type listPullRequestOptions struct {
 var listPullRequestOpts listPullRequestOptions
 
 var listPullRequestCmd = &cobra.Command{
-	Use:   "pr",
+	Use:   "pull-request",
+	Aliases: []string{"pr"},
 	Short: "List pull requests",
 	RunE: runListPullRequest,
 }

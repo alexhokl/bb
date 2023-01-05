@@ -19,5 +19,5 @@ type DeploymentVariable struct {
 	// The value of the variable. If the variable is secured, this will be empty.
 	Value string `json:"value,omitempty"`
 	// If true, this variable will be treated as secured. The value will never be exposed in the logs or the REST API.
-	Secured bool `json:"secured,omitempty"`
+	Secured bool `json:"secured"`
 }

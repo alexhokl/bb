@@ -3,9 +3,14 @@ package command
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strings"
 
+	"github.com/alexhokl/bb/models"
 	"github.com/alexhokl/helper/authhelper"
 	"github.com/alexhokl/helper/cli"
+	"github.com/alexhokl/helper/git"
+	"github.com/alexhokl/helper/regexhelper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2/bitbucket"
@@ -61,6 +66,37 @@ func validateToken(cmd *cobra.Command, _ []string) error {
 	}
 
 	return nil
+}
+
+// getRepositoryInfoFromCurrentPath returns repository information using
+// information from git setup in the current directory
+func getRepositoryInfoFromCurrentPath() (*models.Repository, error) {
+	cmdOut, err := git.GetOriginURL()
+	if err != nil {
+		if strings.Contains(err.Error(), "129") {
+			return nil, fmt.Errorf("git remote get-url is not supported. Please upgrade to the latest version of git")
+		}
+		return nil, err
+	}
+
+	remote := string(cmdOut)
+	if !strings.Contains(remote, "bitbucket.org") {
+		return nil, fmt.Errorf("Error: Only repository of BitBucket is supported")
+	}
+
+	regex := regexp.MustCompile(`bitbucket\.org/(?P<org>\w+)\/(?P<name>.*)`)
+	matches := regexhelper.FindNamedGroupMatchedStrings(regex, remote)
+
+	if matches["org"] == "" || matches["name"] == "" {
+		return nil, fmt.Errorf("Error: Unable to retrieve repository name")
+	}
+
+	repo := &models.Repository{
+		Org:  matches["org"],
+		Name: matches["name"],
+	}
+
+	return repo, nil
 }
 
 func getOAuthConfigurationFromViper() (*authhelper.OAuthConfig, error) {

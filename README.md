@@ -32,7 +32,17 @@ a directory where it is in of the directories specified in `PATH` environment
 variable.
 
 Login to BitBucket is required and OAuth client ID and secret should be set in
-environment variable `BB_PR_CLIENT_ID` and `BB_PR_CLIENT_SECRET` respectively.
+configuration file. The default path is `$HOME/.bb.yml`. The content should be
+similar to this.
+
+```yaml
+client_id: your-client-id
+client_secret: your-client-secret
+```
+
+See section `Create a consumer` in [Use OAuth on Bitbucket
+Cloud](https://support.atlassian.com/bitbucket-cloud/docs/use-oauth-on-bitbucket-cloud/)
+for the steps to create `client_id` and `client_secret`.
 
 ### Build
 

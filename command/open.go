@@ -1,54 +1,53 @@
 package command
 
 import (
-	"errors"
+	"context"
 	"fmt"
 	"os/exec"
 
+	"github.com/alexhokl/bb/swagger"
+	"github.com/alexhokl/helper/authhelper"
 	clihelper "github.com/alexhokl/helper/cli"
 	"github.com/spf13/cobra"
 )
 
-// NewOpenCommand returns definition of command checkout
-func NewOpenCommand(cli *ManagerCli) *cobra.Command {
-	opts := idOption{}
-
-	cmd := &cobra.Command{
-		Use:   "open",
-		Short: "Open the web page of the specified pull request in a browser",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 0 {
-				cli.ShowHelp(cmd, args)
-				return nil
-			}
-			errRepo := cli.SetRepository()
-			if errRepo != nil {
-				return errRepo
-			}
-			errCred := cli.SetCredentials()
-			if errCred != nil {
-				return errCred
-			}
-			return runOpen(cli, opts)
-		},
-	}
-
-	flags := cmd.Flags()
-	flags.IntVarP(&opts.id, "id", "i", 0, "Pull request ID")
-
-	return cmd
+var openCmd = &cobra.Command{
+	Use:   "open",
+	Short: "Open the web page of the specified pull request in a browser",
+	RunE:  runOpen,
 }
 
-func runOpen(cli *ManagerCli, opts idOption) error {
-	if opts.id <= 0 {
-		return errors.New("invalid pull request ID")
+func init() {
+	rootCmd.AddCommand(openCmd)
+
+	flags := openCmd.Flags()
+	flags.Int32VarP(&idOpts.id, "id", "i", 0, "Pull request ID")
+}
+
+func runOpen(_ *cobra.Command, _ []string) error {
+	if err := validateIDOptions(idOpts); err != nil {
+		return err
 	}
 
-	client := cli.Client()
-	cred := cli.UserCredential()
-	repo := cli.Repo()
+	savedToken, err := authhelper.LoadTokenFromViper()
+	if err != nil {
+		return err
+	}
+	auth := context.WithValue(context.Background(), swagger.ContextAccessToken, savedToken.AccessToken)
+	config := swagger.NewConfiguration()
+	client := swagger.NewAPIClient(config)
 
-	pr, err := client.GetRequest(cred, repo, opts.id)
+	repo, err := getRepositoryInfoFromCurrentPath()
+	if err != nil {
+		return err
+	}
+
+	pr, _, err := client.PullrequestsApi.RepositoriesWorkspaceRepoSlugPullrequestsPullRequestIdGet(
+		auth,
+		idOpts.id,
+		repo.Name,
+		repo.Org,
+	)
 	if err != nil {
 		return err
 	}

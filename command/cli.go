@@ -32,6 +32,20 @@ type idOption struct {
 	id int
 }
 
+type idOptions struct {
+	id int32
+}
+
+var idOpts idOptions
+
+func validateIDOptions(opts idOptions) error {
+	if opts.id <= 0 {
+		return fmt.Errorf("invalid pull request ID")
+	}
+
+	return nil
+}
+
 // NewManagerCli creates a new manager cli instance
 func NewManagerCli() *ManagerCli {
 	cli := ManagerCli{

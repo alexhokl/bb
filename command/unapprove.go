@@ -1,56 +1,55 @@
 package command
 
 import (
-	"errors"
+	"context"
 	"fmt"
 
+	"github.com/alexhokl/bb/swagger"
+	"github.com/alexhokl/helper/authhelper"
 	"github.com/spf13/cobra"
 )
 
-// NewUnapproveCommand returns definition of command unapprove
-func NewUnapproveCommand(cli *ManagerCli) *cobra.Command {
-	opts := idOption{}
-
-	cmd := &cobra.Command{
-		Use:   "unapprove",
-		Short: "Un-approve the specified pull request",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 0 {
-				cli.ShowHelp(cmd, args)
-				return nil
-			}
-			errRepo := cli.SetRepository()
-			if errRepo != nil {
-				return errRepo
-			}
-			errCred := cli.SetCredentials()
-			if errCred != nil {
-				return errCred
-			}
-			return runUnapprove(cli, opts)
-		},
-	}
-
-	flags := cmd.Flags()
-	flags.IntVarP(&opts.id, "id", "i", 0, "Pull request ID")
-
-	return cmd
+var unapproveCmd = &cobra.Command{
+	Use:   "unapprove",
+	Short: "Un-approve the specified pull request",
+	RunE:  runUnapprove,
 }
 
-func runUnapprove(cli *ManagerCli, opts idOption) error {
-	if opts.id <= 0 {
-		return errors.New("invalid pull request ID")
+func init() {
+	rootCmd.AddCommand(unapproveCmd)
+
+	flags := unapproveCmd.Flags()
+	flags.Int32VarP(&idOpts.id, "id", "i", 0, "Pull request ID")
+}
+
+func runUnapprove(_ *cobra.Command, _ []string) error {
+	if err := validateIDOptions(idOpts); err != nil {
+		return err
 	}
 
-	client := cli.Client()
-	cred := cli.UserCredential()
-	repo := cli.Repo()
+	savedToken, err := authhelper.LoadTokenFromViper()
+	if err != nil {
+		return err
+	}
+	auth := context.WithValue(context.Background(), swagger.ContextAccessToken, savedToken.AccessToken)
+	config := swagger.NewConfiguration()
+	client := swagger.NewAPIClient(config)
 
-	err := client.UnapproveRequest(cred, repo, opts.id)
+	repo, err := getRepositoryInfoFromCurrentPath()
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Un-approved pull request [%d].\n", opts.id)
+	_, err = client.PullrequestsApi.RepositoriesWorkspaceRepoSlugPullrequestsPullRequestIdApproveDelete(
+		auth,
+		idOpts.id,
+		repo.Name,
+		repo.Org,
+	)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Un-approved pull request [%d].\n", idOpts.id)
 	return nil
 }

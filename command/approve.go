@@ -1,70 +1,80 @@
 package command
 
 import (
-	"errors"
+	"context"
 	"fmt"
 
+	"github.com/alexhokl/bb/swagger"
+	"github.com/alexhokl/helper/authhelper"
 	"github.com/alexhokl/helper/git"
 	"github.com/spf13/cobra"
 )
 
 type approveOptions struct {
-	idOption
+	idOptions
 	isKeepBranch bool
 }
 
-// NewApproveCommand returns definition of command approve
-func NewApproveCommand(cli *ManagerCli) *cobra.Command {
-	opts := approveOptions{}
+var approveOpts approveOptions
 
-	cmd := &cobra.Command{
-		Use:   "approve",
-		Short: "Approve the specified pull request",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 0 {
-				cli.ShowHelp(cmd, args)
-				return nil
-			}
-			errRepo := cli.SetRepository()
-			if errRepo != nil {
-				return errRepo
-			}
-			errCred := cli.SetCredentials()
-			if errCred != nil {
-				return errCred
-			}
-			return runApprove(cli, opts)
-		},
-	}
-
-	flags := cmd.Flags()
-	flags.IntVarP(&opts.id, "id", "i", 0, "Pull request ID")
-	flags.BoolVarP(&opts.isKeepBranch, "keep-branch", "k", false, "Keep local branch after approval")
-
-	return cmd
+var approveCmd = &cobra.Command{
+	Use:   "approve",
+	Short: "Approve the specified pull request",
+	RunE:  runApprove,
 }
 
-func runApprove(cli *ManagerCli, opts approveOptions) error {
-	if opts.id <= 0 {
-		return errors.New("invalid pull request ID")
+func init() {
+	rootCmd.AddCommand(approveCmd)
+
+	flags := approveCmd.Flags()
+	flags.Int32VarP(&approveOpts.id, "id", "i", 0, "Pull request ID")
+	flags.BoolVarP(&approveOpts.isKeepBranch, "keep-branch", "k", false, "Keep local branch after approval")
+
+	approveCmd.MarkFlagRequired("id")
+}
+
+func runApprove(_ *cobra.Command, _ []string) error {
+	if err := validateIDOptions(approveOpts.idOptions); err != nil {
+		return err
 	}
 
-	client := cli.Client()
-	cred := cli.UserCredential()
-	repo := cli.Repo()
-
-	pr, errGet := client.GetRequest(cred, repo, opts.id)
-	if errGet != nil {
-		return errGet
-	}
-
-	err := client.ApproveRequest(cred, repo, opts.id)
+	savedToken, err := authhelper.LoadTokenFromViper()
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Approved pull request [%d].\n", opts.id)
+	auth := context.WithValue(context.Background(), swagger.ContextAccessToken, savedToken.AccessToken)
+	config := swagger.NewConfiguration()
+	client := swagger.NewAPIClient(config)
 
-	if opts.isKeepBranch {
+	repo, err := getRepositoryInfoFromCurrentPath()
+	if err != nil {
+		return err
+	}
+
+	pr, _, err := client.PullrequestsApi.RepositoriesWorkspaceRepoSlugPullrequestsPullRequestIdGet(
+		auth,
+		idOpts.id,
+		repo.Name,
+		repo.Org,
+	)
+	if err != nil {
+		return err
+	}
+
+
+	_, _, err = client.PullrequestsApi.RepositoriesWorkspaceRepoSlugPullrequestsPullRequestIdApprovePost(
+		auth,
+		approveOpts.idOptions.id,
+		repo.Name,
+		repo.Org,
+	)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Approved pull request [%d].\n", idOpts.id)
+
+	if approveOpts.isKeepBranch {
 		return nil
 	}
 

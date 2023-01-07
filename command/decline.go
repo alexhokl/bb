@@ -1,65 +1,88 @@
 package command
 
 import (
-	"errors"
+	"context"
 	"fmt"
 
+	"github.com/alexhokl/bb/swagger"
+	"github.com/alexhokl/helper/authhelper"
 	"github.com/spf13/cobra"
 )
 
-// NewDeclineCommand returns definition of command decline
-func NewDeclineCommand(cli *ManagerCli) *cobra.Command {
-	opts := commentOptions{}
-
-	cmd := &cobra.Command{
-		Use:   "decline",
-		Short: "Decline the specified pull request",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 0 {
-				cli.ShowHelp(cmd, args)
-				return nil
-			}
-			errRepo := cli.SetRepository()
-			if errRepo != nil {
-				return errRepo
-			}
-			errCred := cli.SetCredentials()
-			if errCred != nil {
-				return errCred
-			}
-			return runDecline(cli, opts)
-		},
-	}
-
-	flags := cmd.Flags()
-	flags.IntVarP(&opts.id, "id", "i", 0, "Pull request ID")
-	flags.StringVarP(&opts.message, "message", "m", "", "comment message")
-
-	return cmd
+type declineOptions struct {
+	idOptions
+	message string
 }
 
-func runDecline(cli *ManagerCli, opts commentOptions) error {
-	if opts.id <= 0 {
-		return errors.New("invalid pull request ID")
+var declineOpts declineOptions
+
+func (opts *declineOptions) validate() error {
+	return opts.idOptions.validate()
+}
+
+var declineCmd = &cobra.Command{
+	Use:   "decline",
+	Short: "Decline the specified pull request",
+	RunE:  runDecline,
+}
+
+func init() {
+	rootCmd.AddCommand(declineCmd)
+
+	flags := declineCmd.Flags()
+	flags.Int32VarP(&declineOpts.id, "id", "i", 0, "Pull request ID")
+	flags.StringVarP(&declineOpts.message, "message", "m", "", "comment message")
+
+	declineCmd.MarkFlagRequired("id")
+}
+
+func runDecline(_ *cobra.Command, _ []string) error {
+	if err := declineOpts.validate(); err != nil {
+		return err
 	}
 
-	client := cli.Client()
-	cred := cli.UserCredential()
-	repo := cli.Repo()
+	savedToken, err := authhelper.LoadTokenFromViper()
+	if err != nil {
+		return err
+	}
+	auth := context.WithValue(context.Background(), swagger.ContextAccessToken, savedToken.AccessToken)
+	config := swagger.NewConfiguration()
+	client := swagger.NewAPIClient(config)
 
-	err := client.DeclineRequest(cred, repo, opts.id)
+	repo, err := getRepositoryInfoFromCurrentPath()
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Declined pull request [%d].\n", opts.id)
+	_, _, err = client.PullrequestsApi.RepositoriesWorkspaceRepoSlugPullrequestsPullRequestIdDeclinePost(
+		auth,
+		declineOpts.id,
+		repo.Name,
+		repo.Org,
+	)
+	if err != nil {
+		return err
+	}
 
-	if opts.message != "" {
-		err := client.AddComment(cred, repo, opts.id, opts.message)
+	fmt.Printf("Declined pull request [%d].\n", declineOpts.id)
+
+	if declineOpts.message != "" {
+		opts := swagger.PullrequestComment{
+			Content: &swagger.CommentContent{
+				Raw: declineOpts.message,
+			},
+		}
+		_, _, err = client.PullrequestsApi.RepositoriesWorkspaceRepoSlugPullrequestsPullRequestIdCommentsPost(
+			auth,
+			commentOpts.id,
+			repo.Name,
+			repo.Org,
+			opts,
+		)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Added comment to pull request [%d].\n", opts.id)
+		fmt.Printf("Added comment to pull request [%d].\n", declineOpts.id)
 	}
 
 	return nil

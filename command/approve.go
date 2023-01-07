@@ -17,6 +17,10 @@ type approveOptions struct {
 
 var approveOpts approveOptions
 
+func (opts *approveOptions) validate() error {
+	return opts.idOptions.validate()
+}
+
 var approveCmd = &cobra.Command{
 	Use:   "approve",
 	Short: "Approve the specified pull request",
@@ -34,7 +38,7 @@ func init() {
 }
 
 func runApprove(_ *cobra.Command, _ []string) error {
-	if err := validateIDOptions(approveOpts.idOptions); err != nil {
+	if err := approveOpts.validate(); err != nil {
 		return err
 	}
 

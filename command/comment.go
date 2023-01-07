@@ -1,51 +1,24 @@
 package command
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/alexhokl/bb/swagger"
+	"github.com/alexhokl/helper/authhelper"
 	"github.com/alexhokl/helper/iohelper"
 	"github.com/spf13/cobra"
 )
 
 type commentOptions struct {
-	idOption
+	idOptions
 	message          string
 	markdownFilename string
 }
 
-// NewCommentCommand returns definition of command comment
-func NewCommentCommand(cli *ManagerCli) *cobra.Command {
-	opts := commentOptions{}
+var commentOpts commentOptions
 
-	cmd := &cobra.Command{
-		Use:   "comment",
-		Short: "Add comment to the specified pull request",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 0 {
-				cli.ShowHelp(cmd, args)
-				return nil
-			}
-			errRepo := cli.SetRepository()
-			if errRepo != nil {
-				return errRepo
-			}
-			errCred := cli.SetCredentials()
-			if errCred != nil {
-				return errCred
-			}
-			return runComment(cli, opts)
-		},
-	}
-
-	flags := cmd.Flags()
-	flags.IntVarP(&opts.id, "id", "i", 0, "Pull request ID")
-	flags.StringVarP(&opts.message, "message", "m", "", "comment message")
-	flags.StringVarP(&opts.markdownFilename, "file", "f", "", "markdown file")
-
-	return cmd
-}
-
-func runComment(cli *ManagerCli, opts commentOptions) error {
+func (opts *commentOptions) validate() error {
 	if opts.id <= 0 {
 		return fmt.Errorf("invalid pull request ID")
 	}
@@ -55,25 +28,69 @@ func runComment(cli *ManagerCli, opts commentOptions) error {
 	if opts.message != "" && opts.markdownFilename != "" {
 		return fmt.Errorf("message and file cannot be specified at the same time")
 	}
+	return nil
+}
 
-	message := opts.message
-	if opts.markdownFilename != "" {
+var commentCmd = &cobra.Command{
+	Use:   "comment",
+	Short: "Add comment to the specified pull request",
+	RunE:  runComment,
+}
+
+func init() {
+	rootCmd.AddCommand(commentCmd)
+
+	flags := commentCmd.Flags()
+	flags.Int32VarP(&commentOpts.id, "id", "i", 0, "Pull request ID")
+	flags.StringVarP(&commentOpts.message, "message", "m", "", "comment message")
+	flags.StringVarP(&commentOpts.markdownFilename, "file", "f", "", "markdown file")
+
+	commentCmd.MarkFlagRequired("id")
+}
+
+func runComment(_ *cobra.Command, _ []string) error {
+	if err := commentOpts.validate(); err != nil {
+		return err
+	}
+
+	message := commentOpts.message
+	if commentOpts.markdownFilename != "" {
 		var errFile error
-		message, errFile = iohelper.ReadStringFromFile(opts.markdownFilename)
+		message, errFile = iohelper.ReadStringFromFile(commentOpts.markdownFilename)
 		if errFile != nil {
 			return errFile
 		}
 	}
 
-	client := cli.Client()
-	cred := cli.UserCredential()
-	repo := cli.Repo()
+	savedToken, err := authhelper.LoadTokenFromViper()
+	if err != nil {
+		return err
+	}
+	auth := context.WithValue(context.Background(), swagger.ContextAccessToken, savedToken.AccessToken)
+	config := swagger.NewConfiguration()
+	client := swagger.NewAPIClient(config)
 
-	err := client.AddComment(cred, repo, opts.id, message)
+	repo, err := getRepositoryInfoFromCurrentPath()
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Added comment to pull request [%d].\n", opts.id)
+	opts := swagger.PullrequestComment{
+		Content: &swagger.CommentContent{
+			Raw: message,
+		},
+	}
+	_, _, err = client.PullrequestsApi.RepositoriesWorkspaceRepoSlugPullrequestsPullRequestIdCommentsPost(
+		auth,
+		commentOpts.id,
+		repo.Name,
+		repo.Org,
+		opts,
+	)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Added comment to pull request [%d].\n", commentOpts.id)
 	return nil
 }

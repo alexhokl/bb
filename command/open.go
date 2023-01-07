@@ -25,7 +25,7 @@ func init() {
 }
 
 func runOpen(_ *cobra.Command, _ []string) error {
-	if err := validateIDOptions(idOpts); err != nil {
+	if err := idOpts.validate(); err != nil {
 		return err
 	}
 

@@ -20,6 +20,10 @@ type checkoutOptions struct {
 
 var checkoutOpts checkoutOptions
 
+func (opts checkoutOptions) validate() error {
+	return opts.idOptions.validate()
+}
+
 var checkoutCmd = &cobra.Command{
 	Use:   "checkout",
 	Short: "Checkout the latest code of the branch of the specified pull request",
@@ -37,7 +41,7 @@ func init() {
 }
 
 func runCheckout(_ *cobra.Command, _ []string) error {
-	if err := validateIDOptions(checkoutOpts.idOptions); err != nil {
+	if err := checkoutOpts.validate(); err != nil {
 		return err
 	}
 

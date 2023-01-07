@@ -38,7 +38,7 @@ type idOptions struct {
 
 var idOpts idOptions
 
-func validateIDOptions(opts idOptions) error {
+func (opts idOptions) validate() error {
 	if opts.id <= 0 {
 		return fmt.Errorf("invalid pull request ID")
 	}

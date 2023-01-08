@@ -1,11 +1,15 @@
 package command
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
 	"github.com/alexhokl/bb/models"
+	"github.com/alexhokl/bb/swagger"
+	"github.com/alexhokl/helper/authhelper"
 	"github.com/alexhokl/helper/git"
+	"github.com/antihax/optional"
 	"github.com/spf13/cobra"
 )
 
@@ -16,42 +20,35 @@ type createPullRequestOptions struct {
 	message               string
 }
 
-// NewCreateCommand returns definition of command merge
-func NewCreateCommand(cli *ManagerCli) *cobra.Command {
-	opts := createPullRequestOptions{}
+var createPullRequestOpts createPullRequestOptions
 
-	cmd := &cobra.Command{
-		Use:   "create",
-		Short: "Create the specified pull request",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 0 {
-				cli.ShowHelp(cmd, args)
-				return nil
-			}
-			errRepo := cli.SetRepository()
-			if errRepo != nil {
-				return errRepo
-			}
-			errCred := cli.SetCredentials()
-			if errCred != nil {
-				return errCred
-			}
-			return runCreate(cli, opts)
-		},
+func (opts createPullRequestOptions) Validate() error {
+	if opts.destinationBranchName == "" {
+		return fmt.Errorf("destination branch name is required")
 	}
-
-	flags := cmd.Flags()
-	flags.StringVarP(&opts.destinationBranchName, "destination", "d", "", "Destination branch")
-	flags.StringVarP(&opts.sourceBranchName, "source", "s", "", "Source branch; current branch if not specified")
-	flags.StringVarP(&opts.title, "title", "t", "", "Title; branch name if not specified")
-	flags.StringVarP(&opts.message, "message", "m", "", "Long description; auto-generated if not specified")
-
-	return cmd
+	return nil
 }
 
-func runCreate(cli *ManagerCli, opts createPullRequestOptions) error {
-	if opts.destinationBranchName == "" {
-		return errors.New("destination branch is not specified")
+var createPullRequestCmd = &cobra.Command{
+	Use:   "pull-request",
+	Aliases: []string{"pr"},
+	Short: "Create the specified pull request",
+	RunE:  runCreate,
+}
+
+func init() {
+	rootCmd.AddCommand(createPullRequestCmd)
+
+	flags := createPullRequestCmd.Flags()
+	flags.StringVarP(&createPullRequestOpts.destinationBranchName, "destination", "d", "", "Destination branch")
+	flags.StringVarP(&createPullRequestOpts.sourceBranchName, "source", "s", "", "Source branch; current branch if not specified")
+	flags.StringVarP(&createPullRequestOpts.title, "title", "t", "", "Title; branch name if not specified")
+	flags.StringVarP(&createPullRequestOpts.message, "message", "m", "", "Long description; auto-generated if not specified")
+}
+
+func runCreate(_ *cobra.Command, _ []string) error {
+	if err := createPullRequestOpts.Validate(); err != nil {
+		return err
 	}
 
 	_, errFetch := git.Fetch()
@@ -60,48 +57,76 @@ func runCreate(cli *ManagerCli, opts createPullRequestOptions) error {
 	}
 	fmt.Println("Downloaded the latest information from BitBucket.")
 
-	client := cli.Client()
-	cred := cli.UserCredential()
-	repo := cli.Repo()
-
-	if opts.sourceBranchName == "" {
+	if createPullRequestOpts.sourceBranchName == "" {
 		currentBranchName, errCurrentBranch := git.GetCurrentBranchName()
 		if errCurrentBranch != nil {
 			return errCurrentBranch
 		}
-		opts.sourceBranchName = currentBranchName
+		createPullRequestOpts.sourceBranchName = currentBranchName
 	}
 
-	if opts.sourceBranchName == opts.destinationBranchName {
+	if createPullRequestOpts.sourceBranchName == createPullRequestOpts.destinationBranchName {
 		return errors.New("source branch cannot be same as destination branch")
 	}
 
-	if opts.title == "" {
-		opts.title = opts.sourceBranchName
+	if createPullRequestOpts.title == "" {
+		createPullRequestOpts.title = createPullRequestOpts.sourceBranchName
 	}
 
-	if opts.message == "" {
-		msg, errMessage := git.GetBranchCommitComments(opts.sourceBranchName, opts.destinationBranchName)
+	if createPullRequestOpts.message == "" {
+		msg, errMessage := git.GetBranchCommitComments(createPullRequestOpts.sourceBranchName, createPullRequestOpts.destinationBranchName)
 		if errMessage != nil {
 			return errMessage
 		}
-		opts.message = msg
+		createPullRequestOpts.message = msg
 	}
 
-	prRequest := &models.PullRequestCreateRequest{
-		Destination: models.CommitBranch{Branch: models.Branch{Name: opts.destinationBranchName}},
-		Source:      models.CommitBranch{Branch: models.Branch{Name: opts.sourceBranchName}},
-		Title:       opts.title,
-		Description: opts.message,
+	savedToken, err := authhelper.LoadTokenFromViper()
+	if err != nil {
+		return err
+	}
+	auth := context.WithValue(context.Background(), swagger.ContextAccessToken, savedToken.AccessToken)
+	config := swagger.NewConfiguration()
+	client := swagger.NewAPIClient(config)
+
+	repo, err := getRepositoryInfoFromCurrentPath()
+	if err != nil {
+		return err
 	}
 
-	pr, errCreate := client.CreateRequest(cred, repo, prRequest)
-	if errCreate != nil {
-		return errCreate
+	pullRequest := swagger.Pullrequest{
+		Title: createPullRequestOpts.title,
+		Summary: &swagger.CommentContent{
+			Raw: createPullRequestOpts.message,
+		},
+		Destination: &swagger.PullrequestEndpoint{
+			Branch: &swagger.PullRequestBranch{
+				Name: createPullRequestOpts.destinationBranchName,
+			},
+		},
+		Source: &swagger.PullrequestEndpoint{
+			Branch: &swagger.PullRequestBranch{
+				Name: createPullRequestOpts.sourceBranchName,
+			},
+		},
 	}
+
+	opts := &swagger.PullrequestsApiRepositoriesWorkspaceRepoSlugPullrequestsPostOpts{
+		Body: optional.NewInterface(pullRequest),
+	}
+	pr, _, err := client.PullrequestsApi.RepositoriesWorkspaceRepoSlugPullrequestsPost(
+		auth,
+		repo.Name,
+		repo.Org,
+		opts,
+	)
+	if err != nil {
+		return err
+	}
+
 	fmt.Println("Pull request created.")
-	pr.PrintShortDescription(true)
-	pr.PrintDescription()
+	models.PrintShortDescription(&pr, true)
+	models.PrintDescription(&pr)
 
 	return nil
 }

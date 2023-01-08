@@ -1,70 +1,112 @@
 package command
 
 import (
-	"errors"
+	"context"
 	"fmt"
 
+	"github.com/alexhokl/bb/swagger"
+	"github.com/alexhokl/helper/authhelper"
 	"github.com/alexhokl/helper/git"
+	"github.com/antihax/optional"
 	"github.com/spf13/cobra"
 )
 
+// reference: https://developer.atlassian.com/cloud/bitbucket/rest/api-group-pullrequests/#api-repositories-workspace-repo-slug-pullrequests-pull-request-id-merge-post
+
+type MergeStrategy string
+
+const (
+	MergeCommit MergeStrategy = "merge_commit"
+	NoCommit    MergeStrategy = "no_commit"
+	Squash      MergeStrategy = "squash"
+)
+
 type mergeOptions struct {
-	idOption
-	isKeepBranch bool
+	idOptions
+	isKeepBranch        bool
+	isCloseSourceBranch bool
+	mergeStrategy       string
 }
 
-// NewMergeCommand returns definition of command merge
-func NewMergeCommand(cli *ManagerCli) *cobra.Command {
-	opts := mergeOptions{}
+var mergeOpts mergeOptions
 
-	cmd := &cobra.Command{
-		Use:   "merge",
-		Short: "Merge the specified pull request",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 0 {
-				cli.ShowHelp(cmd, args)
-				return nil
-			}
-			errRepo := cli.SetRepository()
-			if errRepo != nil {
-				return errRepo
-			}
-			errCred := cli.SetCredentials()
-			if errCred != nil {
-				return errCred
-			}
-			return runMerge(cli, opts)
-		},
-	}
-
-	flags := cmd.Flags()
-	flags.IntVarP(&opts.id, "id", "i", 0, "Pull request ID")
-	flags.BoolVarP(&opts.isKeepBranch, "keep-branch", "k", false, "Keep local branch after merging")
-
-	return cmd
+func (opts mergeOptions) Validate() error {
+	return opts.idOptions.validate()
 }
 
-func runMerge(cli *ManagerCli, opts mergeOptions) error {
-	if opts.id <= 0 {
-		return errors.New("invalid pull request ID")
+var mergeCmd = &cobra.Command{
+	Use:   "merge",
+	Short: "Merge the specified pull request",
+	RunE:  runMerge,
+}
+
+func init() {
+	rootCmd.AddCommand(mergeCmd)
+
+	flags := mergeCmd.Flags()
+	flags.Int32VarP(&mergeOpts.id, "id", "i", 0, "Pull request ID")
+	flags.BoolVarP(&mergeOpts.isKeepBranch, "keep-branch", "k", false, "Keep local branch after merging")
+	flags.BoolVar(&mergeOpts.isCloseSourceBranch, "close-source-branch", true, "Close source branch after merging")
+	flags.StringVar(&mergeOpts.mergeStrategy, "strategy", "merge_commit", "Merge strategy (merge_commit, no_commit, squash)")
+
+	mergeCmd.MarkFlagRequired("id")
+}
+
+func runMerge(_ *cobra.Command, _ []string) error {
+	if err := mergeOpts.Validate(); err != nil {
+		return err
 	}
-
-	client := cli.Client()
-	cred := cli.UserCredential()
-	repo := cli.Repo()
-
-	pr, errGet := client.GetRequest(cred, repo, opts.id)
-	if errGet != nil {
-		return errGet
-	}
-
-	err := client.MergeRequest(cred, repo, opts.id)
+	strategy, err := getMergeStrategy(mergeOpts.mergeStrategy)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Merged pull request [%d].\n", opts.id)
 
-	if opts.isKeepBranch {
+	savedToken, err := authhelper.LoadTokenFromViper()
+	if err != nil {
+		return err
+	}
+	auth := context.WithValue(context.Background(), swagger.ContextAccessToken, savedToken.AccessToken)
+	config := swagger.NewConfiguration()
+	client := swagger.NewAPIClient(config)
+
+	repo, err := getRepositoryInfoFromCurrentPath()
+	if err != nil {
+		return err
+	}
+
+	pr, _, err := client.PullrequestsApi.RepositoriesWorkspaceRepoSlugPullrequestsPullRequestIdGet(
+		auth,
+		describeOpts.id,
+		repo.Name,
+		repo.Org,
+	)
+	if err != nil {
+		return err
+	}
+
+	mergeParams := swagger.PullrequestMergeParameters{
+		CloseSourceBranch: mergeOpts.isCloseSourceBranch,
+		MergeStrategy:     string(strategy),
+		Message:           "",
+		Type_:             "merge",
+	}
+	opts := &swagger.PullrequestsApiRepositoriesWorkspaceRepoSlugPullrequestsPullRequestIdMergePostOpts{
+		Async: optional.NewBool(false),
+		Body:  optional.NewInterface(mergeParams),
+	}
+	_, _, err = client.PullrequestsApi.RepositoriesWorkspaceRepoSlugPullrequestsPullRequestIdMergePost(
+		auth,
+		describeOpts.id,
+		repo.Name,
+		repo.Org,
+		opts,
+	)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Merged pull request [%d].\n", mergeOpts.id)
+
+	if mergeOpts.isKeepBranch {
 		return nil
 	}
 
@@ -95,4 +137,17 @@ func runMerge(cli *ManagerCli, opts mergeOptions) error {
 	}
 
 	return nil
+}
+
+func getMergeStrategy(input string) (MergeStrategy, error) {
+	switch input {
+	case "merge_commit":
+		return MergeCommit, nil
+	case "no_commit":
+		return NoCommit, nil
+	case "squash":
+		return Squash, nil
+	default:
+		return "", fmt.Errorf("invalid merge strategy %s", input)
+	}
 }

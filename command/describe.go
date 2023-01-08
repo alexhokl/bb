@@ -1,71 +1,93 @@
 package command
 
 import (
-	"errors"
+	"context"
 	"fmt"
 
 	"github.com/alexhokl/bb/models"
+	"github.com/alexhokl/bb/swagger"
+	"github.com/alexhokl/helper/authhelper"
 	"github.com/alexhokl/helper/git"
+	"github.com/alexhokl/helper/jsonhelper"
 	"github.com/spf13/cobra"
 )
 
+// reference: https://developer.atlassian.com/cloud/bitbucket/rest/api-group-pullrequests/#api-repositories-workspace-repo-slug-pullrequests-pull-request-id-activity-get
+
+type pullRequestActivityListResponse struct {
+	Items []models.PullRequestActivity `json:"values"`
+	Next  string                       `json:"next"`
+}
+
 type describeOptions struct {
-	idOption
+	idOptions
 	isShowDifftool bool
 }
 
-// NewDescribeCommand returns definition of command describe
-func NewDescribeCommand(cli *ManagerCli) *cobra.Command {
-	opts := describeOptions{}
+var describeOpts describeOptions
 
-	cmd := &cobra.Command{
-		Use:   "describe",
-		Short: "Describe the specified pull request",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 0 {
-				cli.ShowHelp(cmd, args)
-				return nil
-			}
-			errRepo := cli.SetRepository()
-			if errRepo != nil {
-				return errRepo
-			}
-			errCred := cli.SetCredentials()
-			if errCred != nil {
-				return errCred
-			}
-			return runDescribe(cli, opts)
-		},
-	}
-
-	flags := cmd.Flags()
-	flags.IntVarP(&opts.id, "id", "i", 0, "Pull request ID")
-	flags.BoolVarP(&opts.isShowDifftool, "difftool", "d", false, "Open difftool after description")
-
-	return cmd
+func (opts describeOptions) Validate() error {
+	return opts.idOptions.validate()
 }
 
-func runDescribe(cli *ManagerCli, opts describeOptions) error {
-	if opts.id <= 0 {
-		return errors.New("invalid pull request ID")
+var describeCmd = &cobra.Command{
+	Use:   "describe",
+	Short: "Describe the specified pull request",
+	RunE:  runDescribe,
+}
+
+func init() {
+	rootCmd.AddCommand(describeCmd)
+
+	flags := describeCmd.Flags()
+	flags.Int32VarP(&describeOpts.id, "id", "i", 0, "Pull request ID")
+	flags.BoolVarP(&describeOpts.isShowDifftool, "difftool", "d", false, "Open difftool after description")
+}
+
+func runDescribe(_ *cobra.Command, _ []string) error {
+	if err := describeOpts.Validate(); err != nil {
+		return err
 	}
 
-	client := cli.Client()
-	cred := cli.UserCredential()
-	repo := cli.Repo()
+	savedToken, err := authhelper.LoadTokenFromViper()
+	if err != nil {
+		return err
+	}
+	auth := context.WithValue(context.Background(), swagger.ContextAccessToken, savedToken.AccessToken)
+	config := swagger.NewConfiguration()
+	client := swagger.NewAPIClient(config)
 
-	pr, err := client.GetRequest(cred, repo, opts.id)
+	repo, err := getRepositoryInfoFromCurrentPath()
 	if err != nil {
 		return err
 	}
 
-	activities, errActivities := client.ActivityRequest(cred, repo, opts.id)
+	pr, _, err := client.PullrequestsApi.RepositoriesWorkspaceRepoSlugPullrequestsPullRequestIdGet(
+		auth,
+		describeOpts.id,
+		repo.Name,
+		repo.Org,
+	)
+	if err != nil {
+		return err
+	}
+
+	respBody, _, errActivities := client.PullrequestsApi.RepositoriesWorkspaceRepoSlugPullrequestsPullRequestIdActivityGet(
+		auth,
+		describeOpts.id,
+		repo.Name,
+		repo.Org,
+	)
 	if errActivities != nil {
 		return errActivities
 	}
+	activities, errParse := parseActivityResponse(respBody)
+	if errParse != nil {
+		return errParse
+	}
 
-	pr.PrintShortDescription(true)
-	pr.PrintDescription()
+	models.PrintShortDescription(&pr, true)
+	models.PrintDescription(&pr)
 
 	fmt.Println("---")
 
@@ -85,7 +107,7 @@ func runDescribe(cli *ManagerCli, opts describeOptions) error {
 	fmt.Println("Diff:")
 	fmt.Println(stat)
 
-	if opts.isShowDifftool {
+	if describeOpts.isShowDifftool {
 		errDifftool := git.Difftool(pr.Destination.Branch.Name, pr.Source.Branch.Name)
 		if errDifftool != nil {
 			return errDifftool
@@ -93,4 +115,25 @@ func runDescribe(cli *ManagerCli, opts describeOptions) error {
 	}
 
 	return nil
+}
+
+func parseActivityResponse(body []byte) ([]models.PullRequestActivity, error) {
+	var list []models.PullRequestActivity
+
+	// TODO: handle pagination
+	var listResponse pullRequestActivityListResponse
+	errParse := jsonhelper.ParseJSONFromBytes(&listResponse, body)
+	if errParse != nil {
+		return nil, fmt.Errorf("failed to parse response body to JSON [%v]", errParse)
+	}
+	if list == nil {
+		list = listResponse.Items
+	} else {
+		list = append(list, listResponse.Items...)
+	}
+
+	// getting around a bug of the API
+	updatedList := list[:len(list)-1]
+
+	return updatedList, nil
 }

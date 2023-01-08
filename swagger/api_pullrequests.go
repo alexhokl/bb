@@ -2207,7 +2207,7 @@ Returns a paginated list of the pull request&#39;s commits.  These are the commi
 
 
 */
-func (a *PullrequestsApiService) RepositoriesWorkspaceRepoSlugPullrequestsPullRequestIdCommitsGet(ctx context.Context, pullRequestId int32, repoSlug string, workspace string) (*http.Response, error) {
+func (a *PullrequestsApiService) RepositoriesWorkspaceRepoSlugPullrequestsPullRequestIdCommitsGet(ctx context.Context, pullRequestId int32, repoSlug string, workspace string) ([]byte, *http.Response, error) {
 	var (
 		localVarHttpMethod = strings.ToUpper("Get")
 		localVarPostBody   interface{}
@@ -2258,18 +2258,18 @@ func (a *PullrequestsApiService) RepositoriesWorkspaceRepoSlugPullrequestsPullRe
 	}
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHttpMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFileName, localVarFileBytes)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	localVarHttpResponse, err := a.client.callAPI(r)
 	if err != nil || localVarHttpResponse == nil {
-		return localVarHttpResponse, err
+		return nil, localVarHttpResponse, err
 	}
 
 	localVarBody, err := ioutil.ReadAll(localVarHttpResponse.Body)
 	localVarHttpResponse.Body.Close()
 	if err != nil {
-		return localVarHttpResponse, err
+		return nil, localVarHttpResponse, err
 	}
 
 
@@ -2284,10 +2284,10 @@ func (a *PullrequestsApiService) RepositoriesWorkspaceRepoSlugPullrequestsPullRe
 			err = a.client.decode(&v, localVarBody, localVarHttpResponse.Header.Get("Content-Type"));
 				if err != nil {
 					newErr.error = err.Error()
-					return localVarHttpResponse, newErr
+					return nil, localVarHttpResponse, newErr
 				}
 				newErr.model = v
-				return localVarHttpResponse, newErr
+				return nil, localVarHttpResponse, newErr
 		}
 
 		if localVarHttpResponse.StatusCode == 404 {
@@ -2295,16 +2295,16 @@ func (a *PullrequestsApiService) RepositoriesWorkspaceRepoSlugPullrequestsPullRe
 			err = a.client.decode(&v, localVarBody, localVarHttpResponse.Header.Get("Content-Type"));
 				if err != nil {
 					newErr.error = err.Error()
-					return localVarHttpResponse, newErr
+					return nil, localVarHttpResponse, newErr
 				}
 				newErr.model = v
-				return localVarHttpResponse, newErr
+				return nil, localVarHttpResponse, newErr
 		}
 
-		return localVarHttpResponse, newErr
+		return nil, localVarHttpResponse, newErr
 	}
 
-	return localVarHttpResponse, nil
+	return localVarBody, localVarHttpResponse, nil
 }
 
 /*

@@ -1,78 +1,95 @@
 package command
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"sort"
 	"strings"
 
+	"github.com/alexhokl/bb/models"
+	"github.com/alexhokl/bb/swagger"
+	"github.com/alexhokl/helper/authhelper"
 	"github.com/alexhokl/helper/collection"
+	"github.com/alexhokl/helper/jsonhelper"
 	"github.com/spf13/cobra"
 )
 
+// reference: https://developer.atlassian.com/cloud/bitbucket/rest/api-group-pullrequests/#api-repositories-workspace-repo-slug-pullrequests-pull-request-id-commits-get
+
+type commitListResponse struct {
+	Items []models.CommitInfo `json:"values"`
+	Next  string              `json:"next"`
+}
+
 type listJiraIDsOptions struct {
 	isCommaSeparated bool
-	label            string
-	pullRequestID    int
+	pullRequestID    int32
 	idPrefixes       []string
 }
 
-// NewListJiraIDsCommand returns definition of command list
-func NewListJiraIDsCommand(cli *ManagerCli) *cobra.Command {
-	opts := listJiraIDsOptions{}
+var listJiraOpts listJiraIDsOptions
 
-	cmd := &cobra.Command{
-		Use:   "list-jira-ids",
-		Short: "List JIRA IDs of a pull request which has the specified JIRA ID prefix(es)",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 0 {
-				cli.ShowHelp(cmd, args)
-				return nil
-			}
-			errRepo := cli.SetRepository()
-			if errRepo != nil {
-				return errRepo
-			}
-			errCred := cli.SetCredentials()
-			if errCred != nil {
-				return errCred
-			}
-			if opts.label != "" {
-				errJiraCred := cli.SetJiraCredentials()
-				if errJiraCred != nil {
-					return errJiraCred
-				}
-			}
-			return runListJiraIDs(cli, opts)
-		},
-	}
-
-	flags := cmd.Flags()
-	flags.IntVarP(&opts.pullRequestID, "id", "i", 0, "Pull request ID")
-	flags.BoolVar(&opts.isCommaSeparated, "comma", false, "comma separated list")
-	flags.StringArrayVarP(&opts.idPrefixes, "prefixes", "p", []string{}, "Comma separated list of JIRA ID prefixes")
-	flags.StringVar(&opts.label, "label", "", "Label to be applied to all issues")
-
-	return cmd
-}
-
-func runListJiraIDs(cli *ManagerCli, opts listJiraIDsOptions) error {
-	client := cli.Client()
-	cred := cli.UserCredential()
-	repo := cli.Repo()
-
+func (opts listJiraIDsOptions) Validate() error {
 	if len(opts.idPrefixes) == 0 {
 		return fmt.Errorf("JIRA ID prefixes are not specified")
 	}
+	return nil
+}
 
-	list, err := client.ListCommits(cred, repo, opts.pullRequestID)
+var listJiraCmd = &cobra.Command{
+	Use:   "jira",
+	Short: "List JIRA IDs of a pull request which has the specified JIRA ID prefix(es)",
+	RunE:  runListJiraIDs,
+}
+
+func init() {
+	listCmd.AddCommand(listJiraCmd)
+
+	flags := listJiraCmd.Flags()
+	flags.Int32VarP(&listJiraOpts.pullRequestID, "id", "i", 0, "Pull request ID")
+	flags.BoolVar(&listJiraOpts.isCommaSeparated, "comma", false, "comma separated list")
+	flags.StringArrayVarP(&listJiraOpts.idPrefixes, "prefixes", "p", []string{}, "Comma separated list of JIRA ID prefixes")
+}
+
+func runListJiraIDs(_ *cobra.Command, _ []string) error {
+	if err := listJiraOpts.Validate(); err != nil {
+		return err
+	}
+
+	savedToken, err := authhelper.LoadTokenFromViper()
+	if err != nil {
+		return err
+	}
+	auth := context.WithValue(context.Background(), swagger.ContextAccessToken, savedToken.AccessToken)
+	config := swagger.NewConfiguration()
+	client := swagger.NewAPIClient(config)
+
+	repo, err := getRepositoryInfoFromCurrentPath()
 	if err != nil {
 		return err
 	}
 
+	responseBodyBytes, _, err := client.PullrequestsApi.RepositoriesWorkspaceRepoSlugPullrequestsPullRequestIdCommitsGet(
+		auth,
+		listJiraOpts.pullRequestID,
+		repo.Name,
+		repo.Org,
+	)
+	if err != nil {
+		return err
+	}
+	list, errParse := parseCommitListResponse(responseBodyBytes)
+	if errParse != nil {
+		return errParse
+	}
+	if len(list) == 0 {
+		return fmt.Errorf("no commits found")
+	}
+
 	var builder strings.Builder
 	builder.WriteString(`(((`)
-	for index, p := range opts.idPrefixes {
+	for index, p := range listJiraOpts.idPrefixes {
 		if index == 0 {
 			builder.WriteString(p)
 		} else {
@@ -91,7 +108,7 @@ func runListJiraIDs(cli *ManagerCli, opts listJiraIDsOptions) error {
 	distinctIDs := collection.GetDistinct(ids)
 	sort.Strings(distinctIDs)
 
-	if opts.isCommaSeparated {
+	if listJiraOpts.isCommaSeparated {
 		fmt.Print(collection.GetDelimitedString(distinctIDs, ", "))
 		fmt.Println()
 	} else {
@@ -100,15 +117,23 @@ func runListJiraIDs(cli *ManagerCli, opts listJiraIDsOptions) error {
 		}
 	}
 
-	if opts.label != "" {
-		for _, i := range distinctIDs {
-			errLabel := client.AddJiraLabels(cred, repo, i, opts.label)
-			if errLabel != nil {
-				return errLabel
-			}
-			fmt.Printf("Added label [%s] to JIRA issue [%s].\n", opts.label, i)
-		}
+	return nil
+}
+
+func parseCommitListResponse(body []byte) ([]models.CommitInfo, error) {
+	var list []models.CommitInfo
+
+	// TODO: handle pagination
+	var listResponse commitListResponse
+	errParse := jsonhelper.ParseJSONFromBytes(&listResponse, body)
+	if errParse != nil {
+		return nil, fmt.Errorf("failed to parse response body to JSON [%v]", errParse)
+	}
+	if list == nil {
+		list = listResponse.Items
+	} else {
+		list = append(list, listResponse.Items...)
 	}
 
-	return nil
+	return list, nil
 }

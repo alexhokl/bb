@@ -19,7 +19,7 @@ var deleteEnvironmentCmd = &cobra.Command{
 }
 
 type deleteEnvironmentOptions struct {
-	uuid string
+	name string
 }
 
 var deleteEnvironmentOpts deleteEnvironmentOptions
@@ -28,9 +28,9 @@ func init() {
 	deleteCmd.AddCommand(deleteEnvironmentCmd)
 
 	flags := deleteEnvironmentCmd.Flags()
-	flags.StringVar(&deleteEnvironmentOpts.uuid, "id", "", "UUID of environment with curly braces")
+	flags.StringVar(&deleteEnvironmentOpts.name, "env", "", "name of environment")
 
-	deleteEnvironmentCmd.MarkFlagRequired("id")
+	deleteEnvironmentCmd.MarkFlagRequired("env")
 }
 
 func runDeleteEnvironment(_ *cobra.Command, _ []string) error {
@@ -47,11 +47,16 @@ func runDeleteEnvironment(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
+	envUUID, err := getUUIDFromEnvironmentName(repo, client, auth, listEnvironmentVariableOpts.name)
+	if err != nil {
+		return err
+	}
+
 	_, err = client.DeploymentsApi.DeleteEnvironmentForRepository(
 		auth,
 		repo.Org,
 		repo.Name,
-		deleteEnvironmentOpts.uuid,
+		envUUID,
 	)
 	if err != nil {
 		return err

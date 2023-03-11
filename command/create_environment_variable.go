@@ -20,7 +20,7 @@ var createEnvironmentVariableCmd = &cobra.Command{
 }
 
 type createEnvironmentVariableOptions struct {
-	uuid string
+	name string
 	key string
 	value string
 	valueFilePath string
@@ -33,13 +33,13 @@ func init() {
 	createCmd.AddCommand(createEnvironmentVariableCmd)
 
 	flags := createEnvironmentVariableCmd.Flags()
-	flags.StringVar(&createEnvironmentVariableOpts.uuid, "id", "", "UUID of environment with curly braces")
+	flags.StringVar(&createEnvironmentVariableOpts.name, "env", "", "name of environment")
 	flags.StringVar(&createEnvironmentVariableOpts.key, "key", "", "key of environment variable")
 	flags.StringVar(&createEnvironmentVariableOpts.value, "value", "", "value of environment variable")
 	flags.StringVar(&createEnvironmentVariableOpts.valueFilePath, "file", "", "path to file containing value of environment variable")
 	flags.BoolVar(&createEnvironmentVariableOpts.isSecret, "secret", false, "value of environment variable")
 
-	createEnvironmentVariableCmd.MarkFlagRequired("id")
+	createEnvironmentVariableCmd.MarkFlagRequired("env")
 	createEnvironmentVariableCmd.MarkFlagRequired("key")
 }
 
@@ -53,6 +53,11 @@ func runCreateEnvironmentVariables(_ *cobra.Command, _ []string) error {
 	client := swagger.NewAPIClient(config)
 
 	repo, err := getRepositoryInfoFromCurrentPath()
+	if err != nil {
+		return err
+	}
+
+	envUUID, err := getUUIDFromEnvironmentName(repo, client, auth, listEnvironmentVariableOpts.name)
 	if err != nil {
 		return err
 	}
@@ -75,7 +80,7 @@ func runCreateEnvironmentVariables(_ *cobra.Command, _ []string) error {
 		auth,
 		repo.Org,
 		repo.Name,
-		createEnvironmentVariableOpts.uuid,
+		envUUID,
 		environmentVariable,
 	)
 	if err != nil {

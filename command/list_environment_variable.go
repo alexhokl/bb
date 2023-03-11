@@ -19,7 +19,7 @@ var listEnvironmentVariableCmd = &cobra.Command{
 }
 
 type listEnvironmentVariableOptions struct {
-	uuid string
+	name string
 }
 
 var listEnvironmentVariableOpts listEnvironmentVariableOptions
@@ -28,9 +28,9 @@ func init() {
 	listCmd.AddCommand(listEnvironmentVariableCmd)
 
 	flags := listEnvironmentVariableCmd.Flags()
-	flags.StringVar(&listEnvironmentVariableOpts.uuid, "id", "", "UUID of environment with curly braces")
+	flags.StringVar(&listEnvironmentVariableOpts.name, "env", "", "name of environment")
 
-	listEnvironmentVariableCmd.MarkFlagRequired("id")
+	listEnvironmentVariableCmd.MarkFlagRequired("env")
 }
 
 func runListEnvironmentVariables(_ *cobra.Command, _ []string) error {
@@ -47,11 +47,16 @@ func runListEnvironmentVariables(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
+	envUUID, err := getUUIDFromEnvironmentName(repo, client, auth, listEnvironmentVariableOpts.name)
+	if err != nil {
+		return err
+	}
+
 	page, _, err := client.PipelinesApi.GetDeploymentVariables(
 		auth,
 		repo.Org,
 		repo.Name,
-		listEnvironmentVariableOpts.uuid,
+		envUUID,
 	)
 	if err != nil {
 		return err

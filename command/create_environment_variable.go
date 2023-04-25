@@ -57,7 +57,7 @@ func runCreateEnvironmentVariables(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	envUUID, err := getUUIDFromEnvironmentName(repo, client, auth, listEnvironmentVariableOpts.name)
+	envUUID, err := getUUIDFromEnvironmentName(repo, client, auth, createEnvironmentVariableOpts.name)
 	if err != nil {
 		return err
 	}

@@ -86,6 +86,13 @@ func getRepositoryInfoFromCurrentPath() (*models.Repository, error) {
 
 	regex := regexp.MustCompile(`bitbucket\.org/(?P<org>\w+)\/(?P<name>.*)`)
 	matches := regexhelper.FindNamedGroupMatchedStrings(regex, remote)
+	if len(matches) == 0 {
+		alternativeRegex := regexp.MustCompile(`bitbucket\.org:(?P<org>\w+)/(?P<name>.*)`)
+		matches = regexhelper.FindNamedGroupMatchedStrings(alternativeRegex, remote)
+		if len(matches) == 0 {
+			return nil, fmt.Errorf("Error: Unable to retrieve repository name")
+		}
+	}
 
 	if matches["org"] == "" || matches["name"] == "" {
 		return nil, fmt.Errorf("Error: Unable to retrieve repository name")

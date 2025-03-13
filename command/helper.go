@@ -46,3 +46,29 @@ func getUUIDFromEnvironmentName(repo *models.Repository, client *swagger.APIClie
 	}
 	return "", fmt.Errorf("no environment %s found", name)
 }
+
+func getUUIDFromEnvironmentVariableKey(repo *models.Repository, client *swagger.APIClient, auth context.Context, envUUID string, key string) (string, error) {
+	page, _, err := client.PipelinesApi.GetDeploymentVariables(
+		auth,
+		repo.Org,
+		repo.Name,
+		envUUID,
+	)
+	if err != nil {
+		return "", err
+	}
+
+	var variables []swagger.DeploymentVariable
+	variables = append(variables, page.Values...)
+
+	if len(variables) == 0 {
+		return "", fmt.Errorf("no environment variable %s found", key)
+	}
+
+	for _, v := range variables {
+		if v.Key == key {
+			return v.Uuid, nil
+		}
+	}
+	return "", fmt.Errorf("no environment variable %s found", key)
+}

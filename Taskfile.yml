@@ -1,0 +1,27 @@
+version: '3'
+
+tasks:
+  build:
+    desc: Build without creating an executable
+    cmds:
+      - go build -o /dev/null
+
+  test:
+    desc: Run unit tests
+    cmds:
+      - go test ./...
+
+  coverage:
+    desc: Run unit tests and show package coverage
+    cmds:
+      - go test -cover ./...
+
+  install:
+    desc: Install the binary locally
+    cmds:
+      - go install
+
+  completion:
+    desc: Install bash completion
+    cmds:
+      - pr completion bash | sudo tee /etc/bash_completion.d/pr

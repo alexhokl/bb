@@ -23,10 +23,10 @@ type listPullRequestOptions struct {
 var listPullRequestOpts listPullRequestOptions
 
 var listPullRequestCmd = &cobra.Command{
-	Use:   "pull-request",
-	Aliases: []string{"pr"},
-	Short: "List pull requests",
-	RunE: runListPullRequest,
+	Use:     "pull-request",
+	Aliases: []string{"pull-requests", "pr"},
+	Short:   "List pull requests",
+	RunE:    runListPullRequest,
 }
 
 func init() {
@@ -74,7 +74,6 @@ func runListPullRequest(_ *cobra.Command, _ []string) error {
 	}
 
 	var prList []swagger.Pullrequest
-
 
 	prList = append(prList, page.Values...)
 

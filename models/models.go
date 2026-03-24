@@ -63,3 +63,10 @@ type Repository struct {
 	Org  string
 	Name string
 }
+
+// UserGroup represents a Bitbucket workspace user group from the legacy 1.0 API
+type UserGroup struct {
+	Name     string `json:"name"`
+	Slug     string `json:"slug"`
+	FullSlug string `json:"full_slug"`
+}

@@ -12,10 +12,10 @@ import (
 // reference: https://developer.atlassian.com/cloud/bitbucket/rest/api-group-pipelines/#api-repositories-workspace-repo-slug-deployments-config-environments-environment-uuid-variables-get
 
 var listEnvironmentVariableCmd = &cobra.Command{
-	Use:   "environment-variable",
-	Aliases: []string{"env-var"},
-	Short: "List environment variables",
-	RunE: runListEnvironmentVariables,
+	Use:     "environment-variable",
+	Aliases: []string{"environment-variables", "env-var", "env-vars"},
+	Short:   "List environment variables",
+	RunE:    runListEnvironmentVariables,
 }
 
 type listEnvironmentVariableOptions struct {
@@ -72,7 +72,7 @@ func runListEnvironmentVariables(_ *cobra.Command, _ []string) error {
 
 	fmt.Println("Key,Value")
 	for _, v := range environmentVariables {
-		 fmt.Printf("%s,%s\n", v.Key, v.Value)
+		fmt.Printf("%s,%s\n", v.Key, v.Value)
 	}
 	return nil
 }

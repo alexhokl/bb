@@ -38,9 +38,10 @@ func (opts listJiraIDsOptions) Validate() error {
 }
 
 var listJiraCmd = &cobra.Command{
-	Use:   "jira",
-	Short: "List JIRA IDs of a pull request which has the specified JIRA ID prefix(es)",
-	RunE:  runListJiraIDs,
+	Use:     "jira",
+	Aliases: []string{"jiras"},
+	Short:   "List JIRA IDs of a pull request which has the specified JIRA ID prefix(es)",
+	RunE:    runListJiraIDs,
 }
 
 func init() {

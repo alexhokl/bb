@@ -12,10 +12,10 @@ import (
 // reference: https://developer.atlassian.com/cloud/bitbucket/rest/api-group-deployments/#api-repositories-workspace-repo-slug-environments-get
 
 var listEnvironmentCmd = &cobra.Command{
-	Use:   "environment",
-	Aliases: []string{"env"},
-	Short: "List environments",
-	RunE: runListEnvironment,
+	Use:     "environment",
+	Aliases: []string{"environments", "env", "envs"},
+	Short:   "List environments",
+	RunE:    runListEnvironment,
 }
 
 func init() {
@@ -47,7 +47,6 @@ func runListEnvironment(_ *cobra.Command, _ []string) error {
 
 	var environments []swagger.DeploymentEnvironment
 
-
 	environments = append(environments, page.Values...)
 
 	if len(environments) == 0 {
@@ -57,7 +56,7 @@ func runListEnvironment(_ *cobra.Command, _ []string) error {
 
 	fmt.Println("UUID,Name")
 	for _, e := range environments {
-		 fmt.Printf("%s,%s\n", e.Uuid, e.Name)
+		fmt.Printf("%s,%s\n", e.Uuid, e.Name)
 	}
 	return nil
 }

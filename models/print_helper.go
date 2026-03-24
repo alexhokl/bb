@@ -53,6 +53,29 @@ func PrintDescription(pr *swagger.Pullrequest) {
 	// fmt.Printf("Description:\n%s\n", pr.Description)
 }
 
+// PrintAccount prints the details of a Bitbucket account
+func PrintAccount(a *swagger.Account) {
+	color.New(color.FgCyan).Printf("%s", a.DisplayName)
+	fmt.Printf(" (%s)", a.Username)
+	if a.Uuid != "" {
+		color.New(color.FgGreen).Printf(" %s", a.Uuid)
+	}
+	fmt.Println()
+}
+
+// PrintWorkspaceMembership prints a single workspace membership entry
+func PrintWorkspaceMembership(m *swagger.WorkspaceMembership) {
+	if m.User != nil {
+		PrintAccount(m.User)
+	}
+}
+
+// PrintUserGroup prints a single workspace user group
+func PrintUserGroup(g *UserGroup) {
+	color.New(color.FgCyan).Printf("%s", g.Name)
+	fmt.Printf(" (%s)\n", g.Slug)
+}
+
 // ToString returns the description of a comment
 func (c Comment) ToString() string {
 	return fmt.Sprintf(

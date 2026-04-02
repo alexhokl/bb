@@ -3,6 +3,8 @@ package command
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -16,10 +18,15 @@ import (
 	"golang.org/x/oauth2/bitbucket"
 )
 
-var cfgFile string
+var (
+	cfgFile string
+	noColor bool
+)
+
+const applicationName = "bb"
 
 var rootCmd = &cobra.Command{
-	Use:               "bb",
+	Use:               applicationName,
 	Short:             "BitBucket Pull Request Manager",
 	SilenceUsage:      true,
 	PersistentPreRunE: validateToken,
@@ -31,7 +38,14 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.bb.yml)")
+
+	defaultConfigDesc := fmt.Sprintf("$HOME/.config/%s/config.yaml", applicationName)
+	if configDir, err := os.UserConfigDir(); err == nil {
+		defaultConfigDesc = filepath.Join(configDir, applicationName, "config.yaml")
+	}
+
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", fmt.Sprintf("config file (default: %s)", defaultConfigDesc))
+	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "Disable color output")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 

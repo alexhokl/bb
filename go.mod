@@ -3,7 +3,7 @@ module github.com/alexhokl/bb
 go 1.25.5
 
 require (
-	github.com/alexhokl/helper v0.0.92
+	github.com/alexhokl/helper v0.0.93
 	github.com/antihax/optional v1.0.0
 	github.com/fatih/color v1.18.0
 	github.com/spf13/cobra v1.10.2

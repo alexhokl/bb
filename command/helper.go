@@ -1,7 +1,11 @@
 package command
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"os"
+	"strings"
 
 	"github.com/alexhokl/bb/models"
 	"github.com/alexhokl/bb/swagger"
@@ -71,4 +75,34 @@ func getUUIDFromEnvironmentVariableKey(repo *models.Repository, client *swagger.
 		}
 	}
 	return "", fmt.Errorf("no environment variable %s found", key)
+}
+
+// readStdinIfPiped returns the trimmed content of stdin when data is being
+// piped into the process. If stdin is a TTY (no piped input), it returns an
+// empty string and nil error so callers can fall back to flag-based input.
+func readStdinIfPiped() (string, error) {
+	info, err := os.Stdin.Stat()
+	if err != nil {
+		return "", fmt.Errorf("failed to stat stdin: %w", err)
+	}
+	if (info.Mode() & os.ModeCharDevice) != 0 {
+		return "", nil
+	}
+	var buf bytes.Buffer
+	if _, err := io.Copy(&buf, os.Stdin); err != nil {
+		return "", fmt.Errorf("failed to read stdin: %w", err)
+	}
+	return strings.TrimSpace(buf.String()), nil
+}
+
+// getCurrentUserUUID returns the UUID of the currently authenticated user.
+func getCurrentUserUUID(client *swagger.APIClient, auth context.Context) (string, error) {
+	account, _, err := client.UsersApi.UserGet(auth)
+	if err != nil {
+		return "", fmt.Errorf("failed to get current user: %w", err)
+	}
+	if account.Uuid == "" {
+		return "", fmt.Errorf("current user has no UUID")
+	}
+	return account.Uuid, nil
 }

@@ -16,6 +16,9 @@ bb/
 ├── main.go              # Entry point - calls command.Execute()
 ├── command/             # CLI commands (Cobra commands)
 ├── models/              # Data models and output helpers
+├── internal/            # Internal packages (not part of public API)
+│   └── gpgapi/          # Hand-written client for Bitbucket GPG-keys API
+│                        # (the auto-generated swagger client does not cover it)
 ├── swagger/             # Auto-generated BitBucket API client (DO NOT EDIT)
 ├── go.mod               # Go module definition
 └── Makefile             # Build commands

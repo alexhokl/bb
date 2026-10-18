@@ -4,13 +4,12 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/alexhokl/bb/models"
 	"github.com/alexhokl/bb/swagger"
 	"github.com/alexhokl/helper/authhelper"
-	"github.com/alexhokl/helper/collection"
 	"github.com/alexhokl/helper/jsonhelper"
 	"github.com/spf13/cobra"
 )
@@ -106,11 +105,11 @@ func runListJiraIDs(_ *cobra.Command, _ []string) error {
 		matches := regex.FindAllString(c.Summary.Raw, -1)
 		ids = append(ids, matches...)
 	}
-	distinctIDs := collection.GetDistinct(ids)
-	sort.Strings(distinctIDs)
+	slices.Sort(ids)
+	distinctIDs := slices.Compact(ids)
 
 	if listJiraOpts.isCommaSeparated {
-		fmt.Print(collection.GetDelimitedString(distinctIDs, ", "))
+		fmt.Print(strings.Join(distinctIDs, ", "))
 		fmt.Println()
 	} else {
 		for _, i := range distinctIDs {

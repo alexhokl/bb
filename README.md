@@ -54,3 +54,9 @@ a Mac,
 ```console
 GOOS=windows GOARCH=amd64 go build -o bb.win64.exe
 ```
+
+## Agent skill
+
+[`skills/bb-cli/`](skills/bb-cli) is an Agent Skill that teaches a coding agent to
+drive the `bb` CLI. Install it into `~/.agents/skills` and
+`~/.claude/skills` with `task install-skill`.

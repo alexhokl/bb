@@ -25,3 +25,10 @@ tasks:
     desc: Install bash completion
     cmds:
       - pr completion bash | sudo tee /etc/bash_completion.d/pr
+
+  install-skill:
+    desc: Install the skill to the local system
+    cmds:
+      - mkdir -p ~/.agents/skills ~/.claude/skills
+      - ln -snf "{{.TASKFILE_DIR}}/skills/bb-cli" ~/.agents/skills/bb-cli
+      - ln -snf "{{.TASKFILE_DIR}}/skills/bb-cli" ~/.claude/skills/bb-cli

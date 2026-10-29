@@ -18,7 +18,7 @@ Before executing any command, check whether a `<system-reminder>` block containi
 - Any command with side effects on the remote repository
 
 **Allowed in read-only mode:**
-- `bb list pr` / `bb get pr` / `bb list repos` / `bb list workspaces`
+- `bb list pr` / `bb get pr` / `bb list comments` / `bb list repos` / `bb list workspaces`
 - `bb list branch-permissions` / `bb get branch-permission`
 - Any read-only fetch or inspection command
 
@@ -79,8 +79,11 @@ bb comment -i <pr-id> -m "<comment body>"
 
 To list the comments of a pull request (threaded, with file and line for comments on code):
 ```bash
-bb list comments --pr-id <pr-id> [--format text|json]
+bb list comments -i <pr-id> [-f text|json]
 ```
+- Must be run inside the pull request's repository (the repository is inferred from the git remote).
+- Text output (default): one thread per top-level comment, ordered by creation time. Each comment has a header `#<comment-id> <author> (<time>) [<path>:<line>]` followed by its indented body; the `[<path>:<line>]` location appears only on inline (code) comments, with an `(old)` suffix when the line is on the old side of the diff. Replies are indented a further 4 spaces and deleted comments show `(deleted)`.
+- `--format json` prints the raw BitBucket comment objects as an array (`[]` when there are none). Prefer it when processing comments programmatically (e.g. `parent.id`, `inline.path`, `inline.to`, `content.raw`).
 
 To checkout the branch of a pull request locally:
 ```bash

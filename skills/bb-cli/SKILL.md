@@ -77,6 +77,11 @@ To add a comment to a pull request:
 bb comment -i <pr-id> -m "<comment body>"
 ```
 
+To list the comments of a pull request (threaded, with file and line for comments on code):
+```bash
+bb list comments --pr-id <pr-id> [--format text|json]
+```
+
 To checkout the branch of a pull request locally:
 ```bash
 bb checkout -i <pr-id>

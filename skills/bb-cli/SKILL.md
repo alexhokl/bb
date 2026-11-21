@@ -72,6 +72,13 @@ To merge a pull request:
 bb merge -i <pr-id> [--strategy <merge_commit|no_commit|squash>] [--close-source-branch=true|false]
 ```
 
+To update the title or description of a pull request (fields not given are kept; `--append` adds the text after the current description, separated by a blank line):
+```bash
+bb update pr -i <pr-id> [-t "<title>"] [-m "<description>" | -f <markdown-file>] [--append]
+```
+- Must be run inside the pull request's repository (the repository is inferred from the git remote).
+- Prefer `-f` with a file for multi-line Markdown descriptions.
+
 To add a comment to a pull request:
 ```bash
 bb comment -i <pr-id> -m "<comment body>"

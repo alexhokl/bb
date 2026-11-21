@@ -205,7 +205,7 @@ func TestCreateBranchPermissionOptions_ToBranchPermission(t *testing.T) {
 	if len(p.Users) != 2 || p.Users[0].Uuid != "user-1" || p.Users[1].Uuid != "user-2" {
 		t.Errorf("Users = %v, want [user-1 user-2]", p.Users)
 	}
-	if len(p.Groups) != 1 || p.Groups[0].Uuid != "group-1" {
+	if len(p.Groups) != 1 || p.Groups[0].Slug != "group-1" {
 		t.Errorf("Groups = %v, want [group-1]", p.Groups)
 	}
 }

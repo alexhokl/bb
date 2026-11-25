@@ -108,6 +108,12 @@ To list projects in a workspace:
 bb list projects -w <workspace-slug>
 ```
 
+To update a repository (move it to another project and/or change its main branch; fields not given are kept):
+```bash
+bb update repository -w <workspace-slug> -s <repo-slug> [-p <project-key>] [-b <main-branch>]
+```
+- The branch given to `-b` must already exist on the remote. Change the main branch before deleting the old one, as BitBucket does not allow deleting the main branch.
+
 ### 3. Users & Permissions
 To show the currently authenticated user:
 ```bash

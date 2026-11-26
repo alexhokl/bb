@@ -1,6 +1,6 @@
 ---
 name: bb-cli
-description: Use when the user asks to fetch, list, create, update, manage, or merge BitBucket pull requests, repositories, and projects directly from the terminal.
+description: Use when the user asks to fetch, list, create, update, manage, or merge BitBucket pull requests, repositories, and projects, or to check the status of Bitbucket Pipelines, directly from the terminal.
 ---
 
 # bb-cli Skill
@@ -20,6 +20,7 @@ Before executing any command, check whether a `<system-reminder>` block containi
 **Allowed in read-only mode:**
 - `bb list pr` / `bb get pr` / `bb list comments` / `bb list repos` / `bb list workspaces`
 - `bb list branch-permissions` / `bb get branch-permission`
+- `bb list pipelines` / `bb get pipeline` (including `--wait`)
 - Any read-only fetch or inspection command
 
 If the user requests a mutating operation while in read-only mode, respond:
@@ -168,5 +169,20 @@ The CLI also supports interacting with environments and variables.
 - `bb list environment-variable`
 - `bb create environment`
 - `bb create environment-variable`
+
+### 6. Pipelines
+Check the status of Bitbucket Pipelines runs of the repository in the current directory. Both commands are read-only and safe in plan/read-only mode.
+
+- `bb list pipelines` — recent pipelines, newest first (aliases `pipeline`, `pl`)
+  - `-b, --branch <name>`: only pipelines of a branch
+  - `-s, --status <status>`: only pipelines with a status, e.g. `SUCCESSFUL`, `FAILED`, `STOPPED`, `IN_PROGRESS`, `PENDING`
+  - `-n, --limit <n>`: number of pipelines (default 10, max 100)
+  - `-f, --format text|json`
+- `bb get pipeline` — status, target, commit, duration, web URL and steps of one pipeline (alias `pl`)
+  - `-n, --build-number <n>`: the pipeline to show; defaults to the latest pipeline of the current branch
+  - `-f, --format text|json` (JSON includes a `steps` array)
+  - `-w, --wait` with `--interval <seconds>` (default 10): poll until the pipeline completes; exits non-zero unless the result is `SUCCESSFUL`, e.g. `bb get pipeline -w && bb merge -i 12`
+
+Statuses are the result of a completed pipeline (`SUCCESSFUL`, `FAILED`, `ERROR`, `STOPPED`, `EXPIRED`) or the stage of an in-progress one (`RUNNING`, `PAUSED`), otherwise `PENDING`.
 
 *(Note: Discover more flags and nested subcommands using `bb <command> --help` if needed)*
